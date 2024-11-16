@@ -15,7 +15,7 @@ class Wallet(models.Model):
     currency = models.CharField(max_length=10, default='XOF')  # Adapté pour les CFA, par exemple
 
     def __str__(self):
-        return f"Wallet de {self.user.username} - Solde: {self.balance}"
+        return f"Wallet de {self.user.username} - {self.phone_number} - {self.currency}"
 
 class Merchant(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='merchant_profile')
