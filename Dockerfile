@@ -1,5 +1,5 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.12-slim
+FROM python:3.12.6-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -10,8 +10,9 @@ WORKDIR /app
 
 # Install dependencies
 COPY Pipfile Pipfile.lock /app/
-RUN pip install pipenv && pipenv install --deploy --ignore-pipfile
-
+RUN pip install --upgrade pip \
+    && pip install pipenv \
+    && pipenv install --deploy --ignore-pipfile --verbose
 # Copy project
 COPY . /app/
 
