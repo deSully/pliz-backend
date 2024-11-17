@@ -138,10 +138,18 @@ AUTH_USER_MODEL = 'actor.CustomUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Durée de validité du token d'accès
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Durée de validité du token de rafraîchissement
+    'ROTATE_REFRESH_TOKENS': True,  # Renouvelle les tokens de rafraîchissement à chaque utilisation
+    'BLACKLIST_AFTER_ROTATION': True,  # Permet de blacklister les anciens tokens
 }

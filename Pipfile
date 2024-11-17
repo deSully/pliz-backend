@@ -9,6 +9,7 @@ psycopg2-binary = "*"
 djangorestframework = "*"
 pyotp = "*"
 twilio = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 

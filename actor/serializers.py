@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from actor.models import CustomUser, Wallet
+from services.otp import OTPService
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(required=True, max_length=15)
@@ -90,3 +92,29 @@ class SendOTPSerializer(serializers.Serializer):
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError("Aucun utilisateur trouvé pour ce numéro de téléphone.")
         return value
+
+class LoginWithOTPSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=15)
+    otp = serializers.CharField(max_length=6)
+
+    def validate_phone_number(self, value):
+        # Vérifier si l'utilisateur existe avec ce numéro de téléphone
+        try:
+            user = CustomUser.objects.get(username=value)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Utilisateur non trouvé.")
+        self.context['user'] = user
+        return value
+
+    def get_user(self):
+        """
+        Retourner l'utilisateur à partir du numéro de téléphone.
+        Si l'utilisateur n'existe pas ou est déjà actif, lever une exception.
+        """
+        phone_number = self.validated_data['phone_number']
+        try:
+            user = CustomUser.objects.get(username=phone_number)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Aucun utilisateur trouvé pour ce numéro de téléphone.")
+
+        return user

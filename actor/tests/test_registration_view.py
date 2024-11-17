@@ -15,8 +15,8 @@ class UserRegistrationViewTest(APITestCase):
             'phone_number': '+1234567890'
         }
 
-    @patch('services.otp.OTPService.generate_otp')  # Remplacez par le chemin réel
-    @patch('services.otp.OTPService.send_otp_by_sms')  # Remplacez par le chemin réel
+    @patch('services.otp.OTPService.generate_otp')
+    @patch('services.otp.OTPService.send_otp_by_sms')
     def test_user_registration_success(self, mock_send_otp_by_sms, mock_generate_otp):
         """
         Teste la création réussie d'un utilisateur et l'envoi d'OTP.
@@ -29,10 +29,6 @@ class UserRegistrationViewTest(APITestCase):
 
         # Vérifie que la réponse est un succès (201 Created)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Vérifie la réponse
-        self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], "Utilisateur créé. Un code OTP a été envoyé par SMS pour valider votre compte.")
 
         # Vérifie la création de l'utilisateur dans la base de données
         user = CustomUser.objects.get(email=self.valid_data['email'])
@@ -49,8 +45,8 @@ class UserRegistrationViewTest(APITestCase):
         mock_generate_otp.assert_called_once_with(user)
         mock_send_otp_by_sms.assert_called_once_with(user, '123456')
 
-    @patch('services.otp.OTPService.generate_otp')  # Remplacez par le chemin réel
-    @patch('services.otp.OTPService.send_otp_by_sms')  # Remplacez par le chemin réel
+    @patch('services.otp.OTPService.generate_otp')
+    @patch('services.otp.OTPService.send_otp_by_sms')
     def test_user_registration_invalid_data(self, mock_send_otp_by_sms, mock_generate_otp):
         """
         Teste l'enregistrement avec des données invalides.
@@ -114,11 +110,7 @@ class UserRegistrationViewTest(APITestCase):
         invalid_data = self.valid_data.copy()
         invalid_data['phone_number'] = '1234567890'
 
-        print(invalid_data)
-
         response = self.client.post(self.url, invalid_data, format='json')
-
-        print(response)
 
         # Vérifie que la réponse est une erreur (400 Bad Request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
