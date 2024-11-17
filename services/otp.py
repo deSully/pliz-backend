@@ -6,22 +6,26 @@ from twilio.rest import Client  # Exemple d'utilisation pour l'envoi par SMS (fa
 
 class OTPService:
     @staticmethod
-    def generate_otp(user):
+    def generate_otp(user, validity_duration=15):
         """
         Génère un OTP pour un utilisateur donné en utilisant pyotp.
-        Retourne le code OTP généré.
+        L'OTP est valide par défaut pendant 15 minutes, mais ce délai peut être modifié via le paramètre validity_duration.
+
+        :param user: L'utilisateur pour lequel générer l'OTP.
+        :param validity_duration: Durée de validité de l'OTP en minutes (par défaut 15).
+        :return: Le code OTP généré.
         """
-        # Clé secrète unique pour l'utilisateur (par exemple, un hash ou une chaîne aléatoire)
+        # Clé secrète unique pour l'utilisateur
         secret = OTPService.get_secret_for_user(user)
 
         # Création d'un générateur OTP avec pyotp
         totp = pyotp.TOTP(secret)
 
+        # Paramétrage de la durée de validité de l'OTP (en secondes)
+        totp = pyotp.TOTP(secret, interval=validity_duration * 60)
+
         # Générer l'OTP
         otp = totp.now()
-
-        # Optionnel: Vous pouvez stocker l'OTP dans la base de données pour validation
-        # par exemple, dans un champ ou une table dédiée.
 
         return otp
 

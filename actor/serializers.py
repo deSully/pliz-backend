@@ -79,3 +79,14 @@ class AccountActivationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Ce compte est déjà actif.")
 
         return user
+
+
+class SendOTPSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+
+    def validate_phone_number(self, value):
+        try:
+            CustomUser.objects.get(username=value)  # username est utilisé comme le numéro de téléphone
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Aucun utilisateur trouvé pour ce numéro de téléphone.")
+        return value
