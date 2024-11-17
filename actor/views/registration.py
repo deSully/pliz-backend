@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
-from .models import Wallet
-from .serializers import UserRegistrationSerializer
+from actor.models import Wallet
+from actor.serializers import UserRegistrationSerializer
 from services.otp import OTPService  # Le service OTP importé ici
 
 class UserRegistrationView(APIView):
