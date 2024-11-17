@@ -1,10 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework import status
+
+from .models import Wallet
 from .serializers import UserRegistrationSerializer
-from services import OTPService  # Le service OTP importé ici
+from services.otp import OTPService  # Le service OTP importé ici
 
 class UserRegistrationView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         # Valider et créer l'utilisateur
         serializer = UserRegistrationSerializer(data=request.data)
@@ -13,9 +18,6 @@ class UserRegistrationView(APIView):
             # Sauvegarder l'utilisateur
             user = serializer.save()
 
-            # Marquer le compte comme inactif par défaut
-            user.is_active = False
-            user.save()
 
             # Générer l'OTP pour l'utilisateur
             otp = OTPService.generate_otp(user)
