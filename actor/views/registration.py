@@ -18,7 +18,6 @@ class UserRegistrationView(APIView):
             # Sauvegarder l'utilisateur
             user = serializer.save()
 
-
             # Générer l'OTP pour l'utilisateur
             otp = OTPService.generate_otp(user)
 

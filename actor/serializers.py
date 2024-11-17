@@ -53,3 +53,29 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class AccountActivationSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=True, max_length=15)
     otp = serializers.CharField(required=True, max_length=6)
+
+    def validate_phone_number(self, value):
+        """
+        Validation personnalisée pour vérifier si le numéro de téléphone est unique dans CustomUser et Wallet.
+        """
+        # Vérifier si le numéro existe déjà dans CustomUser
+        if CustomUser.objects.filter(username=value, is_active=True).exists():
+            raise serializers.ValidationError("Ce numéro de téléphone est déjà utilisé et activé pour un utilisateur.")
+        return value
+
+    def get_user(self):
+        """
+        Retourner l'utilisateur à partir du numéro de téléphone.
+        Si l'utilisateur n'existe pas ou est déjà actif, lever une exception.
+        """
+        phone_number = self.validated_data['phone_number']
+        try:
+            user = CustomUser.objects.get(username=phone_number)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Aucun utilisateur trouvé pour ce numéro de téléphone.")
+
+        # Vérifier si l'utilisateur est déjà actif
+        if user.is_active:
+            raise serializers.ValidationError("Ce compte est déjà actif.")
+
+        return user
