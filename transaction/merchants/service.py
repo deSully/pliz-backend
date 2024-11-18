@@ -35,7 +35,7 @@ class MerchantPaymentService:
 
                 return response
 
-        except PaymentProcessingError as e:
+        except PaymentProcessingError:
             raise PaymentProcessingError("Le paiement a échoué. Veuillez réessayer plus tard.")
 
 

@@ -1,6 +1,6 @@
 from django.db import models
 
-from actor.models import CustomUser, Wallet
+from actor.models import Wallet
 
 
 # Create your models here.

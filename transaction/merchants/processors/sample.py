@@ -1,5 +1,4 @@
 from transaction.errors import PaymentProcessingError
-from transaction.services.transaction import TransactionService
 from dataclasses import dataclass
 
 @dataclass

@@ -1,0 +1,7 @@
+[tool.ruff]
+exclude = ["migrations", "tests"]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+extend-ignore = ["E203"]

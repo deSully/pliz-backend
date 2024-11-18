@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from actor.models import CustomUser, Wallet
-from services.otp import OTPService
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
