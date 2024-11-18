@@ -18,11 +18,11 @@ class Wallet(models.Model):
         return f"Wallet de {self.user.username} - {self.phone_number} - {self.currency}"
 
 class Merchant(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='merchant_profile')
+    wallet = models.OneToOneField(Wallet, on_delete=models.CASCADE, related_name='merchant_wallet', null=True)
     merchant_code = models.CharField(max_length=15, unique=True)
     business_name = models.CharField(max_length=255)
     address = models.TextField()
 
 
     def __str__(self):
-        return f"Marchand: {self.user.username} - Code: {self.merchant_code}"
+        return f"Marchand: {self.wallet.user.username} - Code: {self.merchant_code}"

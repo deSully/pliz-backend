@@ -18,12 +18,12 @@ class WalletAdmin(admin.ModelAdmin):
 
 @admin.register(Merchant)
 class MerchantAdmin(admin.ModelAdmin):
-    list_display = ('user', 'business_name', 'merchant_code', 'address')  # Colonnes visibles
-    search_fields = ('user__username', 'business_name', 'merchant_code')  # Recherche
+    list_display = ('wallet', 'business_name', 'merchant_code', 'address')  # Colonnes visibles
+    search_fields = ('wallet__user__username', 'business_name', 'merchant_code')  # Recherche
     list_filter = ('business_name',)  # Filtres par nom commercial
-    readonly_fields = ('merchant_code', 'user')  # Champs non modifiables
+    readonly_fields = ('merchant_code', 'wallet')  # Champs non modifiables
     fieldsets = (
         ("Informations du Marchand", {
-            'fields': ('user', 'business_name', 'merchant_code', 'address')
+            'fields': ('wallet', 'business_name', 'merchant_code', 'address')
         }),
     )

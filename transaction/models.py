@@ -1,6 +1,6 @@
 from django.db import models
 
-from actor.models import CustomUser
+from actor.models import CustomUser, Wallet
 
 
 # Create your models here.
@@ -19,14 +19,14 @@ class Transaction(models.Model):
     ]
 
     sender = models.ForeignKey(
-        CustomUser,
+        Wallet,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='transactions_sent'
     )
     receiver = models.ForeignKey(
-        CustomUser,
+        Wallet,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -39,10 +39,22 @@ class Transaction(models.Model):
     status = models.CharField(max_length=10, choices=TRANSACTION_STATUSES, default='pending')
 
     def __str__(self):
-        return f"Transaction {self.transaction_type} de {self.sender} à {self.receiver} - {self.amount} - {self.get_status_display()}"
+        return f"Transaction {self.transaction_type} de {self.sender} à {self.receiver} - {self.amount}"
 
     class Meta:
         ordering = ('-timestamp',)
         verbose_name = 'Transaction'
         verbose_name_plural = 'Transactions'
 
+
+class WalletBalanceHistory(models.Model):
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='wallet_balance_histories')
+    balance_before = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    transaction = models.ForeignKey('Transaction', on_delete=models.CASCADE, related_name='balance_histories', null=True)
+    description = models.TextField(blank=True, null=True)
+    transaction_type = models.CharField(max_length=50, choices=[('send', 'Send'), ('receive', 'Receive')])
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Historique du solde - {self.wallet.user.username} - {self.timestamp} - Avant: {self.balance_before}, Après: {self.balance_after}"
