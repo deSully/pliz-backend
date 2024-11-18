@@ -9,6 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./staticfiles:/app/staticfiles
     ports:
       - "${DB_PORT}:5432"
     env_file:

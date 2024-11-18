@@ -10,6 +10,7 @@ djangorestframework = "*"
 pyotp = "*"
 twilio = "*"
 djangorestframework-simplejwt = "*"
+drf-yasg = "*"
 
 [dev-packages]
 
