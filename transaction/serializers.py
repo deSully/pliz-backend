@@ -1,7 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import serializers
-from .models import Transaction, Wallet
+from .models import Transaction, WalletBalanceHistory
+from actor.models import Wallet
 from transaction.services.transaction import TransactionService
 
 
@@ -73,3 +74,16 @@ class MerchantPaymentSerializer(serializers.Serializer):
             raise serializers.ValidationError({"amount": "Le montant doit être positif."})
 
         return data
+
+class WalletBalanceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WalletBalanceHistory
+        fields = ['balance_before', 'balance_after', 'transaction_type', 'timestamp', 'description']
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    balance_histories = WalletBalanceHistorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Transaction
+        fields = ['id', 'transaction_type', 'amount', 'sender', 'receiver', 'timestamp', 'description', 'status', 'balance_histories']
