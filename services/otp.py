@@ -1,61 +1,56 @@
 import pyotp
 from django.core.mail import send_mail
 from django.conf import settings
-from twilio.rest import Client  # Exemple d'utilisation pour l'envoi par SMS (facultatif)
+from twilio.rest import (
+    Client,
+)  # Exemple d'utilisation pour l'envoi par SMS (facultatif)
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class OTPService:
     @staticmethod
-    def generate_otp(user, validity_duration=15):
+    def generate_otp(validity_duration=5):
         """
         Génère un OTP pour un utilisateur donné en utilisant pyotp.
         L'OTP est valide par défaut pendant 15 minutes, mais ce délai peut être modifié via le paramètre validity_duration.
 
-        :param user: L'utilisateur pour lequel générer l'OTP.
         :param validity_duration: Durée de validité de l'OTP en minutes (par défaut 15).
         :return: Le code OTP généré.
         """
         # Clé secrète unique pour l'utilisateur
-        secret = OTPService.get_secret_for_user(user)
-
-        # Création d'un générateur OTP avec pyotp
-        totp = pyotp.TOTP(secret)
+        secret = os.getenv("OTP_SECRET_KEY")
 
         # Paramétrage de la durée de validité de l'OTP (en secondes)
         totp = pyotp.TOTP(secret, interval=validity_duration * 60)
 
         # Générer l'OTP
         otp = totp.now()
+        logger.info(f"Generated OTP: {otp}")
 
         return otp
 
     @staticmethod
-    def validate_otp(user, otp):
+    def validate_otp(otp, validity_duration=5) -> bool:
         """
         Valide un OTP en le comparant à celui généré avec pyotp.
         Retourne True si l'OTP est valide, sinon False.
         """
-        secret = OTPService.get_secret_for_user(user)
-        totp = pyotp.TOTP(secret)
+        secret = os.getenv("OTP_SECRET_KEY")
+        totp = pyotp.TOTP(secret, interval=validity_duration * 60)
 
-        # Vérification de l'OTP (en tenant compte du temps de validité)
-        return totp.verify(otp)
-
-    @staticmethod
-    def get_secret_for_user(user):
-        """
-        Génére et retourne une clé secrète pour l'utilisateur.
-        Cette clé doit être unique pour chaque utilisateur et stockée de manière sécurisée.
-        Pour la démonstration, on crée une clé secrète aléatoire ici.
-        """
-        # Pour la production, il est préférable de stocker cette clé secrète de manière sécurisée
-        # dans un modèle de base de données, liée à l'utilisateur.
-        return pyotp.random_base32()  # Génére une clé secrète aléatoire en base32
+        result = totp.verify(otp)
+        logger.info(f"OTP validation result: {result}")
+        return result
 
     @staticmethod
     def send_otp_by_sms(user, otp):
         """
         Exemple d'envoi de l'OTP par SMS via Twilio.
         """
+
         # Utilisation de Twilio pour envoyer le SMS
         if not settings.TWILIO_PHONE_NUMBER:
             raise Exception("Twilio phone number is not configured.")
@@ -64,7 +59,7 @@ class OTPService:
         message = client.messages.create(
             body=f"Votre code OTP est: {otp}",
             from_=settings.TWILIO_PHONE_NUMBER,
-            to=user.phone_number  # Numéro de téléphone de l'utilisateur
+            to=user.phone_number,  # Numéro de téléphone de l'utilisateur
         )
         return message.sid
 

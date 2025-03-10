@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-
+from actor.models import CustomUser
 from services.otp import (
     OTPService,
 )
@@ -14,7 +14,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 
-class SendOTPView(APIView):
+class SendLoginOTPView(APIView):
     """
     Vue pour envoyer un OTP via SMS à l'utilisateur en fonction de son numéro de téléphone.
     """
@@ -31,6 +31,12 @@ class SendOTPView(APIView):
 
         if serializer.is_valid():
             phone_number = serializer.validated_data["phone_number"]
+
+            customer = CustomUser.objects.filter(username=phone_number).first()
+            if not customer:
+                return Response(
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
             # Générer l'OTP et l'envoyer par SMS
             otp = OTPService.generate_otp()

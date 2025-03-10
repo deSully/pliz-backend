@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Variables
+SERVER_IP=$1                # IP du serveur
+REMOTE_USER="root"          # Utilisateur SSH
+GIT_REPO="https://github.com/deSully/pliz-backend.git"  # URL du repo Git
+APP_DIR="./pliz-backend"    # Chemin de l'application sur le serveur
+PYTHON_VERSION="3.12.6"     # Version de Python
+
+# Vérifier si l'IP est fournie
+if [ -z "$SERVER_IP" ]; then
+  echo "Usage: $0 <server_ip>"
+  exit 1
+fi
+
+echo "Starting deployment to $SERVER_IP..."
+
+# Étape 1 : Se connecter et cloner le projet depuis GitHub
+echo "Cloning the project from GitHub..."
+ssh $REMOTE_USER@$SERVER_IP <<EOF
+  set -e  # Arrêter en cas d'erreur
+  if [ ! -d "$APP_DIR" ]; then
+    git clone $GIT_REPO $APP_DIR
+  else
+    cd $APP_DIR
+    git pull origin main
+  fi
+EOF
+
+# Étape 2 : Configurer Python, Pipenv, Docker, et UFW
+echo "Setting up Python environment, Docker, and UFW..."
+ssh $REMOTE_USER@$SERVER_IP <<EOF
+  set -e
+  # Mettre à jour les paquets
+  sudo apt-get update -y
+
+  # Installer Python et Pip
+  sudo apt-get install -y python$PYTHON_VERSION python3-pip
+
+  # Installer Docker et Docker Compose
+  sudo apt-get install -y docker.io
+  sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo chmod +x /usr/local/bin/docker-compose
+
+  # Vérifier l'installation
+  docker --version
+  docker-compose --version
+
+  # Configurer le pare-feu avec UFW
+  sudo apt-get install -y ufw
+  sudo ufw allow 8000
+  sudo ufw enable
+
+  # Aller dans le répertoire du projet
+  cd $APP_DIR
+
+  # Configurer l'environnement Python avec Pipenv
+  pip install --upgrade pip pipenv
+  pipenv install --deploy --ignore-pipfile
+
+  # Créer le fichier .env
+  cat <<EOT > .env
+POSTGRES_DB=fake_db
+POSTGRES_USER=fake_user
+POSTGRES_PASSWORD=fake_password
+DB_PORT=5432
+TWILIO_ACCOUNT_SID=fake_twilio_sid
+TWILIO_AUTH_TOKEN=fake_twilio_token
+WEB_PORT=8000
+EOT
+
+# Étape 3 : Lancer Docker Compose
+echo "Running Docker Compose..."
+ssh $REMOTE_USER@$SERVER_IP <<EOF
+  set -e
+  cd $APP_DIR
+  docker-compose down
+  docker-compose up -d
+EOF
+
+echo "Deployment completed successfully!"
