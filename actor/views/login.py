@@ -27,17 +27,16 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
 
         if serializer.is_valid():
-            otp = serializer.validated_data["otp"]
+            pin = serializer.validated_data["pin"]
             phone_number = serializer.validated_data["phone_number"]
 
-            # Vérifier si l'OTP est valide
-            if not OTPService.validate_otp(otp):
-                return Response(
-                    {"error": "OTP invalide ou expiré."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
             user = CustomUser.objects.filter(username=phone_number).first()
+            if not user.check_password(pin):
+                return Response(
+                    {"error": "Le code PIN est incorrect."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             tokens = TokenService.generate_tokens_for_user(user)
             login(request, user)
 

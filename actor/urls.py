@@ -16,8 +16,9 @@ urlpatterns = [
         name="user-account-activation",
     ),
     path("auth/send-otp/", SendOTPView.as_view(), name="send-otp"),
-    path("auth/send-login-otp/", SendLoginOTPView.as_view(), name="send-login-otp"),
     path("auth/check-otp/", CheckOTPView.as_view(), name="check-otp"),
+
+    path("auth/send-login-otp/", SendLoginOTPView.as_view(), name="send-login-otp"),
 
     path("auth/login/", LoginView.as_view(), name="login"),
     

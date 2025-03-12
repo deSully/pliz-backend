@@ -6,10 +6,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(required=True, max_length=15)
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
+    password = serializers.CharField(required=False)
 
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'phone_number']
+        fields = ['first_name', 'last_name', 'phone_number', 'password']
 
     def validate_phone_number(self, value):
         """
@@ -37,6 +38,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             last_name=validated_data['last_name'],
             is_active=False  # Marquer le compte comme inactif par défaut
         )
+        
+        # Find a way to hash the password
+        user.set_password(validated_data.get('password', None))
+        user.save()
 
         # Créer un wallet pour l'utilisateur
         Wallet.objects.create(user=user, phone_number=phone_number)
@@ -83,5 +88,5 @@ class CheckOTPSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    otp = serializers.CharField(max_length=6)
+    pin = serializers.CharField(max_length=6)
     phone_number = serializers.CharField(max_length=15)
