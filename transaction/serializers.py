@@ -9,18 +9,17 @@ from transaction.services.transaction import TransactionService
 class SendMoneySerializer(serializers.ModelSerializer):
 
     receiver = serializers.CharField()
-    sender = serializers.CharField()
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         model = Transaction
-        fields = ['receiver', 'amount', 'sender']
+        fields = ['receiver', 'amount']
         read_only_fields = ['status']
 
     def validate(self, data):
         try:
             # Récupérer les wallets de l'envoyeur et du récepteur
-            sender_wallet = Wallet.objects.get(user=data['sender'])
+            sender_wallet = Wallet.objects.get(user=self.context['request'].user)
             receiver_wallet = Wallet.objects.get(user=data['receiver'])
 
             # Vérifier que l'envoyeur et le récepteur sont actifs (vérification de l'utilisateur lié au wallet)
