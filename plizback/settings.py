@@ -141,18 +141,24 @@ AUTH_USER_MODEL = 'actor.CustomUser'
 # REST Framework settings
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Durée de validité du token d'accès
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Durée de validité du token de rafraîchissement
-    'ROTATE_REFRESH_TOKENS': True,  # Renouvelle les tokens de rafraîchissement à chaque utilisation
-    'BLACKLIST_AFTER_ROTATION': True,  # Permet de blacklister les anciens tokens
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=15
+    ),  # Durée de validité du token d'accès
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=1
+    ),  # Durée de validité du token de rafraîchissement
+    "ROTATE_REFRESH_TOKENS": True,  # Renouvelle les tokens de rafraîchissement à chaque utilisation
+    "BLACKLIST_AFTER_ROTATION": True,  # Permet de blacklister les anciens tokens
 }
