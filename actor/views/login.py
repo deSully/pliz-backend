@@ -9,6 +9,7 @@ from services.token import TokenService
 from django.contrib.auth import login
 from drf_yasg.utils import swagger_auto_schema
 
+from utils.dejavu import deja_vu
 
 class LoginView(APIView):
     """
@@ -20,6 +21,7 @@ class LoginView(APIView):
     @swagger_auto_schema(
         request_body=LoginSerializer,  # Ajoute cette ligne
     )
+    @deja_vu
     def post(self, request, *args, **kwargs):
         # Sérialisation des données reçues
         serializer = LoginSerializer(data=request.data)
@@ -29,6 +31,7 @@ class LoginView(APIView):
             phone_number = serializer.validated_data["phone_number"]
 
             user = CustomUser.objects.filter(username=phone_number).first()
+            test_a_fuction()
             if not user.check_password(pin):
                 return Response(
                     {"error": "Le code PIN est incorrect."},
@@ -40,3 +43,11 @@ class LoginView(APIView):
             return Response(status=status.HTTP_200_OK, data=tokens)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def test_a_fuction():
+    """
+    Test de la fonction test_a_fuction.
+    """
+    pass
+    return 'test_a_fuction'

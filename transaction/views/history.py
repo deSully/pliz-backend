@@ -6,6 +6,8 @@ from actor.models import Wallet
 from transaction.models import Transaction
 from transaction.serializers import TransactionSerializer
 
+from utils.dejavu import deja_vu
+
 class TransactionHistoryView(generics.ListAPIView):
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
@@ -21,6 +23,7 @@ class TransactionHistoryView(generics.ListAPIView):
             )
         ]
     )
+    @deja_vu
     def get_queryset(self):
         user = self.request.user
         wallet = Wallet.objects.get(user=user)

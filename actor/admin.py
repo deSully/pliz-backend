@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Wallet
 from .models import Merchant
+from .models import RIB
 
 @admin.register(Wallet)
 class WalletAdmin(admin.ModelAdmin):
@@ -27,3 +28,11 @@ class MerchantAdmin(admin.ModelAdmin):
             'fields': ('wallet', 'business_name', 'merchant_code', 'address')
         }),
     )
+
+
+
+@admin.register(RIB)
+class RIBAdmin(admin.ModelAdmin):
+    list_display = ('titulaire', 'banque', 'numero_compte', 'user', 'created_at')
+    search_fields = ('titulaire', 'banque', 'numero_compte')
+    list_filter = ('banque', 'created_at')

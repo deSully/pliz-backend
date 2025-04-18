@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from actor.models import CustomUser, Wallet
+from actor.models import CustomUser, Wallet, RIB
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -90,3 +90,13 @@ class CheckOTPSerializer(serializers.Serializer):
 class LoginSerializer(serializers.Serializer):
     pin = serializers.CharField(max_length=6)
     phone_number = serializers.CharField(max_length=15)
+
+
+class RIBSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RIB
+        fields = [
+            'id', 'banque', 'code_banque', 'code_guichet',
+            'numero_compte', 'cle_rib', 'titulaire', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']

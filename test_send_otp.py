@@ -1,6 +1,6 @@
 import requests
 
-BASE_URL = "http://104.238.190.98:8000"
+BASE_URL = "http://127.0.0.1:8000"
 LOGIN_RESOURCE = "/api/actor/auth/login/"
 TRANSACTION_RESOURCE = "/api/transaction/history"
 
@@ -33,10 +33,7 @@ def get_transaction_history(access_token):
 def main():
     access_token = get_access_token()
     print(access_token)
-    if access_token:
-        history = get_transaction_history(access_token)
-        if history:
-            print("Historique des transactions:", history)
+    
 
 if __name__ == "__main__":
     main()
