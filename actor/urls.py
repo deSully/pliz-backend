@@ -4,6 +4,7 @@ from actor.views.login import LoginView
 from actor.views.rib import RIBListCreateView, RIBDeleteView
 from actor.views.send_otp import SendOTPView
 from actor.views.registration import UserRegistrationView
+from actor.views.subscription import ToggleSubscriptionView
 
 urlpatterns = [
     path("auth/register/", UserRegistrationView.as_view(), name="user-registration"),
@@ -14,4 +15,6 @@ urlpatterns = [
     # RIB endpoints
     path("ribs/", RIBListCreateView.as_view(), name="rib-list-create"),
     path("ribs/<int:pk>/delete/", RIBDeleteView.as_view(), name="rib-delete"),
+
+    path("user/toggle-subscription/", ToggleSubscriptionView.as_view(), name="toggle-subscription"),
 ]
