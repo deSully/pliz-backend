@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Transaction
+from .models import Transaction, Fee
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
@@ -34,3 +34,35 @@ class TransactionAdmin(admin.ModelAdmin):
         queryset.update(status='failed')
         self.message_user(request, f"{queryset.count()} transactions marquées comme échouées.")
     mark_as_failed.short_description = "Marquer comme échouée"
+
+
+@admin.register(Fee)
+class FeeAdmin(admin.ModelAdmin):
+    list_display = (
+        'transaction_type', 
+        'merchant', 
+        'bank', 
+        'percentage', 
+        'fixed_amount', 
+        'is_active', 
+        'get_fee_display'
+    )
+    list_filter = ('transaction_type', 'merchant', 'bank', 'is_active')
+    search_fields = ('merchant__name', 'bank__name', 'transaction_type')
+    ordering = ('-is_active', 'transaction_type')
+
+    def get_fee_display(self, obj):
+        # Calcul du total des frais en fonction du pourcentage et du montant fixe
+        if obj.percentage and obj.fixed_amount:
+            return f"{obj.percentage}% + {obj.fixed_amount} CFA"
+        elif obj.percentage:
+            return f"{obj.percentage}%"
+        elif obj.fixed_amount:
+            return f"{obj.fixed_amount} CFA"
+        return "Aucun frais"
+
+    get_fee_display.short_description = "Frais appliqués"
+
+    def save_model(self, request, obj, form, change):
+        # Vous pouvez ajouter de la logique ici, comme des calculs ou des ajustements
+        super().save_model(request, obj, form, change)
