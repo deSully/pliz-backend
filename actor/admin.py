@@ -43,8 +43,8 @@ class MerchantAdmin(admin.ModelAdmin):
 
 @admin.register(Bank)
 class BankAdmin(admin.ModelAdmin):
-    list_display = ("name", "country", "is_active")
-    list_filter = ("is_active", "country")
+    list_display = ("name", "country")
+    list_filter = ("country",)
     search_fields = ("name",)
 
 

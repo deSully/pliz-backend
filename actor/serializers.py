@@ -96,7 +96,7 @@ class RIBSerializer(serializers.ModelSerializer):
     class Meta:
         model = RIB
         fields = [
-            'id', 'banque', 'code_banque', 'code_guichet',
+            'id', 'banque', 'bank_code', 'code_guichet',
             'numero_compte', 'cle_rib', 'titulaire', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']

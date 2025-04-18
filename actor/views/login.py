@@ -9,7 +9,6 @@ from services.token import TokenService
 from django.contrib.auth import login
 from drf_yasg.utils import swagger_auto_schema
 
-from utils.dejavu import deja_vu
 
 class LoginView(APIView):
     """
@@ -21,7 +20,6 @@ class LoginView(APIView):
     @swagger_auto_schema(
         request_body=LoginSerializer,  # Ajoute cette ligne
     )
-    @deja_vu
     def post(self, request, *args, **kwargs):
         # Sérialisation des données reçues
         serializer = LoginSerializer(data=request.data)
@@ -50,4 +48,4 @@ def test_a_fuction():
     Test de la fonction test_a_fuction.
     """
     pass
-    return 'test_a_fuction'
+    return "test_a_fuction"

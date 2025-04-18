@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Transaction, Fee
+from .models import Transaction, Fee, TariffGrid
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
@@ -36,33 +36,38 @@ class TransactionAdmin(admin.ModelAdmin):
     mark_as_failed.short_description = "Marquer comme échouée"
 
 
+
+class FeeInline(admin.TabularInline):
+    model = Fee
+    extra = 1
+    fields = (
+        'transaction_type', 'min_amount', 'max_amount',
+        'percentage', 'fixed_amount',
+        'merchant', 'bank', 'is_active'
+    )
+    autocomplete_fields = ['merchant', 'bank']
+    show_change_link = True
+
+
+@admin.register(TariffGrid)
+class TariffGridAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name',)
+    inlines = [FeeInline]
+
+
 @admin.register(Fee)
 class FeeAdmin(admin.ModelAdmin):
     list_display = (
-        'transaction_type', 
-        'merchant', 
-        'bank', 
-        'percentage', 
-        'fixed_amount', 
-        'is_active', 
-        'get_fee_display'
+        'transaction_type', 'min_amount', 'max_amount',
+        'percentage', 'fixed_amount',
+        'merchant', 'bank', 'tariff_grid', 'is_active'
     )
-    list_filter = ('transaction_type', 'merchant', 'bank', 'is_active')
-    search_fields = ('merchant__name', 'bank__name', 'transaction_type')
-    ordering = ('-is_active', 'transaction_type')
-
-    def get_fee_display(self, obj):
-        # Calcul du total des frais en fonction du pourcentage et du montant fixe
-        if obj.percentage and obj.fixed_amount:
-            return f"{obj.percentage}% + {obj.fixed_amount} CFA"
-        elif obj.percentage:
-            return f"{obj.percentage}%"
-        elif obj.fixed_amount:
-            return f"{obj.fixed_amount} CFA"
-        return "Aucun frais"
-
-    get_fee_display.short_description = "Frais appliqués"
-
-    def save_model(self, request, obj, form, change):
-        # Vous pouvez ajouter de la logique ici, comme des calculs ou des ajustements
-        super().save_model(request, obj, form, change)
+    list_filter = (
+        'transaction_type', 'is_active', 'tariff_grid',
+    )
+    search_fields = (
+        'merchant__name', 'bank__name',
+    )
+    autocomplete_fields = ['merchant', 'bank', 'tariff_grid']
