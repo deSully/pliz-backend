@@ -41,6 +41,7 @@ class Transaction(models.Model):
     status = models.CharField(
         max_length=10, choices=TRANSACTION_STATUSES, default="pending"
     )
+    fee_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"Transaction {self.transaction_type} de {self.sender} à {self.receiver} - {self.amount}"
@@ -89,24 +90,89 @@ class Fee(models.Model):
         ("merchant_payment", "Paiement marchand"),
     ]
 
-    tariff_grid = models.ForeignKey(TariffGrid, on_delete=models.CASCADE, related_name='fees', null=True)
+    tariff_grid = models.ForeignKey(
+        TariffGrid, on_delete=models.CASCADE, related_name="fees", null=True
+    )
     transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPES)
 
-    min_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    max_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    min_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    max_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
 
-    percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    fixed_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    fixed_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
 
-    merchant = models.ForeignKey(Merchant, null=True, blank=True, on_delete=models.CASCADE)
+    merchant = models.ForeignKey(
+        Merchant, null=True, blank=True, on_delete=models.CASCADE
+    )
     bank = models.ForeignKey(Bank, null=True, blank=True, on_delete=models.CASCADE)
 
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        unique_together = ('tariff_grid', 'transaction_type', 'min_amount', 'max_amount', 'merchant', 'bank')
+        unique_together = (
+            "tariff_grid",
+            "transaction_type",
+            "min_amount",
+            "max_amount",
+            "merchant",
+            "bank",
+        )
 
     def __str__(self):
         target = self.merchant or self.bank or "Global"
-        return f"{self.transaction_type} [{self.min_amount}-{self.max_amount}] - {target}"
+        return (
+            f"{self.transaction_type} [{self.min_amount}-{self.max_amount}] - {target}"
+        )
 
+class FeeDistributionRule(models.Model):
+    TRANSACTION_TYPES = [
+        ("send_money", "Envoi d'argent"),
+        ("topup", "Rechargement"),
+        ("merchant_payment", "Paiement marchand"),
+    ]
+
+    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPES)
+    merchant = models.ForeignKey(
+        Merchant, null=True, blank=True, on_delete=models.CASCADE
+    )
+    bank = models.ForeignKey(Bank, null=True, blank=True, on_delete=models.CASCADE)
+
+    # Pourcentage de répartition (total doit faire 100)
+    provider_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    bank_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    merchant_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        context = self.merchant or self.bank or "Global"
+        return f"{self.transaction_type} - {context} ({self.total_percentage()}%)"
+
+    def total_percentage(self):
+        return (
+            self.provider_percentage + self.bank_percentage + self.merchant_percentage
+        )
+
+
+class FeeDistribution(models.Model):
+    transaction = models.ForeignKey("Transaction", on_delete=models.CASCADE)
+    actor_type = models.CharField(
+        max_length=30,
+        choices=[
+            ("provider", "Fournisseur"),
+            ("bank", "Banque"),
+            ("merchant", "Marchand"),
+        ],
+    )
+    actor_id = models.PositiveIntegerField()  # ID de la banque ou du marchand concerné
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
