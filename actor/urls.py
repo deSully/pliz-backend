@@ -14,7 +14,7 @@ urlpatterns = [
 
     # RIB endpoints
     path("ribs/", RIBListCreateView.as_view(), name="rib-list-create"),
-    path("ribs/<int:pk>/delete/", RIBDeleteView.as_view(), name="rib-delete"),
+    path("ribs/<uuid:str>/delete/", RIBDeleteView.as_view(), name="rib-delete"),
 
     path("toggle-subscription/", ToggleSubscriptionView.as_view(), name="toggle-subscription"),
 ]

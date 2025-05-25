@@ -1,5 +1,4 @@
 from rest_framework import generics, permissions
-from rest_framework.exceptions import PermissionDenied
 from actor.models import RIB
 from actor.serializers import RIBSerializer
 
