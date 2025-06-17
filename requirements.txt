@@ -10,3 +10,4 @@ django-json-widget
 django-admin-rangefilter
 ruff
 pyotp
+twilio
