@@ -1,4 +1,39 @@
+version: '3.8'
+
 services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /usr/share/nginx/html
+      - ./certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./vhost.d:/etc/nginx/vhost.d:ro
+      - ./staticfiles:/app/staticfiles:ro
+      - ./media:/app/media:ro
+    networks:
+      - webproxy
+    restart: always
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    depends_on:
+      - nginx-proxy
+    environment:
+      DEFAULT_EMAIL: contact@barakasn.com
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+    networks:
+      - webproxy
+    restart: always
+
   db:
     image: postgres:16
     environment:
@@ -7,28 +42,45 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./staticfiles:/app/staticfiles
     ports:
       - "${DB_PORT}:5432"
     env_file:
       - .env
+    networks:
+      - webproxy
 
   web:
     build: .
     command: >
-      sh -c "pipenv run python manage.py migrate && pipenv run python manage.py runserver 0.0.0.0:8000"
+      sh -c "
+        python manage.py migrate && \
+        python manage.py collectstatic --noinput && \
+        python manage.py runserver 0.0.0.0:8000
+      "
     volumes:
       - .:/app
+      - /home/baraka/ftp/files:/app/imports
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    expose:
+      - "8000"
     ports:
-      - "${WEB_PORT}:8000"
-    depends_on:
-      - db
+      - "8000:8000"
     environment:
-      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT}/${POSTGRES_DB}
+      - VIRTUAL_HOST=core.plizmoney.com
+      - LETSENCRYPT_HOST=core.plizmoney.com
+      - LETSENCRYPT_EMAIL=it@plizmoney.com
     env_file:
       - .env
+    depends_on:
+      - db
+    networks:
+      - webproxy
 
 volumes:
   postgres_data:
+
+networks:
+  webproxy:
+    driver: bridge

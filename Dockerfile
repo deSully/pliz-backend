@@ -1,5 +1,5 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.12.6-slim
+FROM python:3.13-alpine
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -9,10 +9,10 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Install dependencies
-COPY Pipfile Pipfile.lock /app/
+COPY requirements.txt /app/
 RUN pip install --upgrade pip \
-    && pip install pipenv \
-    && pipenv install --deploy --ignore-pipfile --verbose
+    && pip install -r requirements.txt
+
 # Copy project
 COPY . /app/
 

@@ -162,3 +162,14 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,  # Renouvelle les tokens de rafraîchissement à chaque utilisation
     "BLACKLIST_AFTER_ROTATION": True,  # Permet de blacklister les anciens tokens
 }
+
+
+# Si tu es derrière un proxy comme nginx-proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Force l'utilisation de HTTPS pour les cookies CSRF et SESSION
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# Autorise les domaines valides
+CSRF_TRUSTED_ORIGINS = ['https://core.plizmoney.com']
