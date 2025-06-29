@@ -46,7 +46,7 @@ class OTPService:
         return result
 
     @staticmethod
-    def send_otp_by_sms(user, otp):
+    def send_otp_by_sms(user_phone_number, otp):
         """
         Exemple d'envoi de l'OTP par SMS via Twilio.
         """
@@ -54,6 +54,10 @@ class OTPService:
         twilio_account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
         twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
+
+        print(f"Twilio Account SID: {twilio_account_sid}")
+        print(f"Twilio Auth Token: {twilio_auth_token}")
+        print(f"Twilio Phone Number: {twilio_phone_number}")
 
         # Utilisation de Twilio pour envoyer le SMS
         if twilio_phone_number is None or twilio_account_sid is None or twilio_auth_token is None:
@@ -65,7 +69,7 @@ class OTPService:
         message = client.messages.create(
             body=f"Votre code OTP est: {otp}",
             from_=twilio_phone_number,  # Numéro de téléphone Twilio
-            to=user.phone_number,  # Numéro de téléphone de l'utilisateur
+            to=user_phone_number,  # Numéro de téléphone de l'utilisateur
         )
         return message.sid
 
