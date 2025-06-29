@@ -19,7 +19,7 @@ class Wallet(models.Model):
     phone_number = models.CharField(max_length=15, unique=True)
     currency = models.CharField(
         max_length=10, default="XOF"
-    )  # Adapté pour les CFA, par exemple
+    )
     is_platform = models.BooleanField(default=False)
 
     def __str__(self):
