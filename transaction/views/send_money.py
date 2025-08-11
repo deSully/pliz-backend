@@ -22,17 +22,17 @@ class SendMoneyView(APIView):
 
         # Ajout de l'utilisateur connecté dans les données du serializer
         data = request.data.copy()  # On copie les données pour y ajouter l'utilisateur connecté
-        data.update({"sender": sender.id})  # On ajoute l'ID de l'utilisateur connecté
-
-        logger.error(f"Data received for SendMoney: {data}")
+        data['sender'] = sender.id
 
         # On crée une instance du serializer avec les nouvelles données
         try:
             logger.error(f"Data received for SendMoney: {data}")
             logger.error(f"User connected: {sender}")
+            
 
-            serializer = SendMoneySerializer(data=data)
-            logger.error(f"Data received for SendMoney: {data}")
+            serializer = SendMoneySerializer(data=data, context={"request": request})
+            logger.info(f"Data received for SendMoney: {data}")
+            logger.info(f"Serializer initialized with data: {serializer.initial_data}")
 
             if serializer.is_valid():
                 serializer.save()  # Crée la transaction et met à jour les soldes

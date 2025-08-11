@@ -36,7 +36,8 @@ class SendMoneySerializer(serializers.ModelSerializer):
             logging.error(f"Validating data: {data}")
 
             # Récupérer les wallets de l'envoyeur et du récepteur
-            sender_wallet = Wallet.objects.get(user__id=data["sender"])
+            logger.error(f"Request context: {self.context['request']}")
+            sender_wallet = Wallet.objects.get(user=self.context["request"].user)
             logging.error(f"Sender wallet: {sender_wallet}")
             receiver_wallet = Wallet.objects.get(phone_number=data["receiver"])
             logging.error(f"Receiver wallet: {receiver_wallet}")
