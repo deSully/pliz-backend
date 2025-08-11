@@ -35,6 +35,7 @@ class SendMoneyView(APIView):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 logger.error(f"Validation errors: {serializer.errors}")
+                logger.error(f"Data received: {data}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         except Exception as e:
