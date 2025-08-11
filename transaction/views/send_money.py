@@ -5,6 +5,8 @@ from rest_framework import status
 
 from transaction.serializers import SendMoneySerializer
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.exceptions import ValidationError
+
 
 class SendMoneyView(APIView):
 
@@ -22,10 +24,13 @@ class SendMoneyView(APIView):
         data['sender'] = sender.id
 
         # On crée une instance du serializer avec les nouvelles données
-        serializer = SendMoneySerializer(data=data, context={"request": request})
+        try:
+            serializer = SendMoneySerializer(data=data, context={"request": request})
 
-        if serializer.is_valid():
-            serializer.save()  # Crée la transaction et met à jour les soldes
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if serializer.is_valid():
+                serializer.save()  # Crée la transaction et met à jour les soldes
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
