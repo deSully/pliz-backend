@@ -25,6 +25,12 @@ class SendMoneySerializer(serializers.ModelSerializer):
         read_only_fields = ["status"]
 
     def validate(self, data):
+        logging.info(f"Validating data: {data}")
+
+        # Vérification que le montant est positif
+        if data["amount"] <= 0:
+            raise serializers.ValidationError({"amount": "Le montant doit être positif."})
+        
         try:
 
             logging.info(f"Validating data: {data}")
