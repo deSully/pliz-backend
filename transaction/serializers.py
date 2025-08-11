@@ -25,7 +25,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
         read_only_fields = ["status"]
 
     def validate(self, data):
-        logging.info(f"Validating data: {data}")
+        logging.error(f"Validating data: {data}")
 
         # Vérification que le montant est positif
         if data["amount"] <= 0:
@@ -33,15 +33,15 @@ class SendMoneySerializer(serializers.ModelSerializer):
         
         try:
 
-            logging.info(f"Validating data: {data}")
+            logging.error(f"Validating data: {data}")
 
             # Récupérer les wallets de l'envoyeur et du récepteur
             sender_wallet = Wallet.objects.get(user__id=data["sender"])
-            logging.info(f"Sender wallet: {sender_wallet}")
+            logging.error(f"Sender wallet: {sender_wallet}")
             receiver_wallet = Wallet.objects.get(phone_number=data["receiver"])
-            logging.info(f"Receiver wallet: {receiver_wallet}")
+            logging.error(f"Receiver wallet: {receiver_wallet}")
 
-            logging.info(f"Sender wallet: {sender_wallet}, Receiver wallet: {receiver_wallet}")
+            logging.error(f"Sender wallet: {sender_wallet}, Receiver wallet: {receiver_wallet}")
 
 
 
