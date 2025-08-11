@@ -5,8 +5,9 @@ from rest_framework import status
 
 from transaction.serializers import SendMoneySerializer
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.exceptions import ValidationError
 
+import logging
+logger = logging.getLogger(__name__)
 
 class SendMoneyView(APIView):
 
@@ -26,11 +27,22 @@ class SendMoneyView(APIView):
         # On crée une instance du serializer avec les nouvelles données
         try:
             serializer = SendMoneySerializer(data=data, context={"request": request})
+            logger.info(f"Data received for SendMoney: {data}")
+            logger.info(f"Serializer initialized with data: {serializer.initial_data}")
 
             if serializer.is_valid():
                 serializer.save()  # Crée la transaction et met à jour les soldes
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                logger.error(f"Validation errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
         except Exception as e:
+            logger.error(f"Error in SendMoneyView: {str(e)}")
+            # En cas d'erreur, on retourne les erreurs du serializer
+            logger.error(f"Validation errors: {serializer.errors if serializer else 'No serializer'}")
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        # Si le serializer n'est pas valide, on retourne les erreurs
+        logger.error(f"Validation errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
