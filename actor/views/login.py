@@ -29,7 +29,6 @@ class LoginView(APIView):
             phone_number = serializer.validated_data["phone_number"]
 
             user = CustomUser.objects.filter(username=phone_number).first()
-            test_a_fuction()
             if not user.check_password(pin):
                 return Response(
                     {"error": "Le code PIN est incorrect."},
@@ -43,9 +42,4 @@ class LoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def test_a_fuction():
-    """
-    Test de la fonction test_a_fuction.
-    """
-    pass
-    return "test_a_fuction"
+

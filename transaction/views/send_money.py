@@ -22,7 +22,7 @@ class SendMoneyView(APIView):
         data['sender'] = sender.id
 
         # On crée une instance du serializer avec les nouvelles données
-        serializer = SendMoneySerializer(data=data)
+        serializer = SendMoneySerializer(data=data, context={"request": request})
 
         if serializer.is_valid():
             serializer.save()  # Crée la transaction et met à jour les soldes

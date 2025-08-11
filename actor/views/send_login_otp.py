@@ -13,6 +13,9 @@ from actor.serializers import SendOTPSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SendLoginOTPView(APIView):
     """
@@ -40,6 +43,9 @@ class SendLoginOTPView(APIView):
 
             # Générer l'OTP et l'envoyer par SMS
             otp = OTPService.generate_otp()
+
+            print(f"OTP généré pour {phone_number}: {otp}")
+            logger.info(f"OTP généré pour {phone_number}: {otp}")
 
             # Vérifier si l'envoi d'OTP est activé
             otp_sending_enabled = os.getenv(

@@ -4,6 +4,8 @@ from .models import Merchant
 from .models import RIB
 from .models import Bank
 from .models import Country
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 
 
 @admin.register(Wallet)
@@ -58,4 +60,14 @@ class CountryAdmin(admin.ModelAdmin):
 class RIBAdmin(admin.ModelAdmin):
     list_display = ("titulaire", "banque", "numero_compte", "user", "created_at")
     search_fields = ("titulaire", "banque", "numero_compte")
-    list_filter = ("banque", "created_at")
+list_filter = ("banque", "created_at")
+
+
+
+CustomUser = get_user_model()
+
+@admin.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    list_display = ("username", "email", "first_name", "last_name", "is_staff", "is_active")
+    search_fields = ("username", "email", "first_name", "last_name")
+    list_filter = ("is_staff", "is_active", "is_superuser")

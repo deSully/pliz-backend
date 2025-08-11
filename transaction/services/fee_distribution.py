@@ -47,7 +47,7 @@ class FeeDistributionService:
                     actor_id=actor.id,
                     amount=amount
                 )
-                TransactionService.credit_wallet(actor.wallet, amount, transaction, f"Part des frais")
+                TransactionService.credit_wallet(actor.wallet, amount, transaction, "Part des frais")
                 distributions.append((actor_type, actor.id, amount))
 
         if rule.provider_percentage and provider:
