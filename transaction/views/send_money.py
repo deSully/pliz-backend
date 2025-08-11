@@ -30,7 +30,7 @@ class SendMoneyView(APIView):
             logger.error(f"User connected: {sender}")
             logger.error(request.data)
 
-            serializer = SendMoneySerializer(data=data, context={"request": request})
+            serializer = SendMoneySerializer(data=data)
             logger.info(f"Data received for SendMoney: {data}")
             logger.info(f"Serializer initialized with data: {serializer.initial_data}")
 
