@@ -11,6 +11,9 @@ from transaction.banks.factory import TopUpFactory
 
 from actor.models import RIB
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class SendMoneySerializer(serializers.ModelSerializer):
     receiver = serializers.CharField()
@@ -23,9 +26,16 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         try:
+
+            logging.info(f"Validating data: {data}")
+            
             # Récupérer les wallets de l'envoyeur et du récepteur
             sender_wallet = Wallet.objects.get(user=self.context["request"].user)
             receiver_wallet = Wallet.objects.get(user=data["receiver"])
+
+            logging.info(f"Sender wallet: {sender_wallet}, Receiver wallet: {receiver_wallet}")
+
+
 
             # Vérifier que l'envoyeur et le récepteur sont actifs (vérification de l'utilisateur lié au wallet)
             if not sender_wallet.user.is_active:
