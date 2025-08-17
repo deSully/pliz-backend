@@ -115,15 +115,15 @@ class WalletBalanceHistoryAdmin(admin.ModelAdmin):
     )
     list_filter = ("transaction_type", "timestamp")
     search_fields = ("wallet__user__username", "description", "transaction__id")
-    readonly_fields = (
-        "wallet",
-        "balance_before",
-        "balance_after",
-        "transaction",
-        "transaction_type",
-        "timestamp",
-        "description",
-    )
+    # readonly_fields = (
+    #     "wallet",
+    #     "balance_before",
+    #     "balance_after",
+    #     "transaction",
+    #     "transaction_type",
+    #     "timestamp",
+    #     "description",
+    # )
     ordering = ("-timestamp",)
 
     def wallet_user(self, obj):
