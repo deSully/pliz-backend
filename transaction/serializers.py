@@ -81,8 +81,8 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         logger.error(f"Creating transaction with data: {self.context["request"].user}")
-        sender_wallet = Wallet.objects.get(user=self.context["request"].user)
-        receiver_wallet = Wallet.objects.get(user=validated_data["receiver"])
+        sender_wallet = Wallet.objects.get(user__username=self.context["request"].user)
+        receiver_wallet = Wallet.objects.get(user__username=validated_data["receiver"])
 
         # Création de la transaction
         validated_data["status"] = "completed"
