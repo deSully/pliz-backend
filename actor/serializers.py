@@ -18,11 +18,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         """
         # Vérifier si le numéro existe déjà dans CustomUser
         if CustomUser.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Ce numéro de téléphone est déjà utilisé pour un utilisateur.")
+            raise serializers.ValidationError(
+                detail="Ce numéro de téléphone est déjà utilisé pour un utilisateur.",
+                code="PHONE_ALREADY_EXISTS"
+            )
 
         # Vérifier si le numéro existe déjà dans Wallet
         if Wallet.objects.filter(phone_number=value).exists():
-            raise serializers.ValidationError("Ce numéro de téléphone est déjà utilisé pour un portefeuille.")
+            raise serializers.ValidationError(
+                detail="Ce numéro de téléphone est déjà utilisé pour un portefeuille.",
+                code="WALLET_PHONE_ALREADY_EXISTS"
+            )
 
         return value
     
@@ -58,7 +64,10 @@ class AccountActivationSerializer(serializers.Serializer):
         """
         # Vérifier si le numéro existe déjà dans CustomUser
         if CustomUser.objects.filter(username=value, is_active=True).exists():
-            raise serializers.ValidationError("Ce numéro de téléphone est déjà utilisé et activé pour un utilisateur.")
+            raise serializers.ValidationError(
+                detail="Ce numéro de téléphone est déjà utilisé et activé pour un utilisateur.",
+                code="USER_PHONE_ALREADY_ACTIVE"
+            )
         return value
 
     def get_user(self):
@@ -70,11 +79,16 @@ class AccountActivationSerializer(serializers.Serializer):
         try:
             user = CustomUser.objects.get(username=phone_number)
         except CustomUser.DoesNotExist:
-            raise serializers.ValidationError("Aucun utilisateur trouvé pour ce numéro de téléphone.")
+            raise serializers.ValidationError(
+                detail="Aucun utilisateur trouvé pour ce numéro de téléphone.",
+                code="USER_NOT_FOUND"
+            )
 
         # Vérifier si l'utilisateur est déjà actif
-        if user.is_active:
-            raise serializers.ValidationError("Ce compte est déjà actif.")
+        raise serializers.ValidationError(
+            detail="Ce compte est déjà actif.",
+            code="ACCOUNT_ALREADY_ACTIVE"
+        )
 
         return user
 

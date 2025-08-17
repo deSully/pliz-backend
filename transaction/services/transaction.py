@@ -29,7 +29,7 @@ class TransactionService:
         # Vérifie si le solde est suffisant
         if current_balance < amount:
             raise ValidationError(
-                message="Fonds insuffisants.", code="INSUFFICIENT_FUNDS_ERROR"
+                detail="Fonds insuffisants.", code="INSUFFICIENT_FUNDS_ERROR"
             )
 
     @staticmethod

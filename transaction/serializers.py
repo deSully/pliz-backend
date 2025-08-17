@@ -30,7 +30,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
         # Vérification que le montant est positif
         if data["amount"] <= 0:
             raise serializers.ValidationError(
-                {"code": "INVALID_AMOUNT", "message": "Le montant doit être positif."}
+                detail="Le montant doit être positif.", code="INVALID_AMOUNT"
             )
 
         try:
@@ -50,17 +50,13 @@ class SendMoneySerializer(serializers.ModelSerializer):
             # Vérifier que l'envoyeur et le récepteur sont actifs (vérification de l'utilisateur lié au wallet)
             if not sender_wallet.user.is_active:
                 raise serializers.ValidationError(
-                    {
-                        "code": "SENDER_INACTIVE_ERROR",
-                        "message": "L'utilisateur envoyeur est inactif.",
-                    }
+                    detail="L'utilisateur envoyeur est inactif.",
+                    code="SENDER_INACTIVE_ERROR",
                 )
             if not receiver_wallet.user.is_active:
                 raise serializers.ValidationError(
-                    {
-                        "code": "RECEIVER_INACTIVE_ERROR",
-                        "message": "L'utilisateur bénéficiaire est inactif.",
-                    }
+                    detail="L'utilisateur bénéficiaire est inactif.",
+                    code="RECEIVER_INACTIVE_ERROR",
                 )
 
             # Vérification du solde de l'envoyeur
@@ -68,10 +64,8 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
         except Wallet.DoesNotExist:
             raise serializers.ValidationError(
-                {
-                    "code": "WALLET_NOT_FOUND_ERROR",
-                    "message": "Un des portefeuilles spécifiés n'existe pas.",
-                }
+                detail="Un des portefeuilles spécifiés n'existe pas.",
+                code="WALLET_NOT_FOUND_ERROR",
             )
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
@@ -121,7 +115,7 @@ class MerchantPaymentSerializer(serializers.Serializer):
         """
         if data["amount"] <= 0:
             raise serializers.ValidationError(
-                {"code": "INVALID_AMOUNT", "message": "Le montant doit être positif."}
+                detail="Le montant doit être positif.", code="INVALID_AMOUNT"
             )
 
         return data
@@ -169,20 +163,12 @@ class TopUpSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data["partner"] not in self.PARTNER_DETAILS:
-            raise serializers.ValidationError(
-                {
-                    "code": "INVALID_PARTNER",
-                    "message": f"Le partenaire '{data['partner']}' n'est pas supporté.",
-                }
-            )
+            raise serializers.ValidationError(detail="Partenaire non supporté", code="INSUPPORTED_PARTNER")
 
         # Vérification du montant
         if data["amount"] <= 0:
             raise serializers.ValidationError(
-                {
-                    "code": "INVALID_AMOUNT",
-                    "message": "Le montant doit être supérieur à zéro.",
-                }
+                detail="Le montant doit être positif.", code="INVALID_AMOUNT"
             )
 
         return data
@@ -212,9 +198,5 @@ class TopUpSerializer(serializers.Serializer):
 
         except PaymentProcessingError as e:
             TransactionService.update_transaction_status(transaction, "failed")
-            raise serializers.ValidationError({
-                "code": "TRANSACTION_FAILED",
-                "message": str(e)
-            })
-
+            raise serializers.ValidationError(detail=str(e), code="TRANSACTION_FAILED")
         return transaction
