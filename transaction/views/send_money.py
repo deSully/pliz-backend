@@ -14,9 +14,7 @@ class SendMoneyView(APIView):
 
     @swagger_auto_schema(request_body=SendMoneySerializer)
     def post(self, request, *args, **kwargs):
-        sender = request.user
         data = request.data.copy()
-        data['sender'] = sender.id
 
         try:
             logger.info(f"Data received for SendMoney: {data}")
