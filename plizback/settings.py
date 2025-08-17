@@ -173,3 +173,19 @@ SESSION_COOKIE_SECURE = True
 
 # Autorise les domaines valides
 CSRF_TRUSTED_ORIGINS = ['https://core.plizmoney.com']
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",  # change le niveau à DEBUG si tu veux tout voir
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",  # DEBUG => affiche DEBUG, INFO, WARNING, ERROR, CRITICAL
+    },
+}

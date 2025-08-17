@@ -7,6 +7,7 @@ from actor.models import Wallet, Merchant
 from transaction.errors import PaymentProcessingError
 from transaction.serializers import MerchantPaymentSerializer
 from transaction.merchants.service import MerchantPaymentService
+from transaction.services.transaction import TransactionService
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -31,37 +32,53 @@ class MerchantPaymentView(APIView):
                 response = MerchantPaymentService.process_payment(
                     merchant, sender_wallet, amount, details
                 )
+
+                TransactionService.debit_wallet(
+                    sender_wallet, amount, response["transaction"]
+                )
+                TransactionService.credit_wallet(
+                    merchant.wallet, amount, response["transaction"]
+                )
                 return Response(response, status=status.HTTP_200_OK)
 
             except ValueError as e:
                 return Response(
                     {"detail": str(e), "code": "VALUE_ERROR"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             except Merchant.DoesNotExist:
                 return Response(
-                    {"detail": "Le marchand spécifié n'existe pas.", "code": "MERCHANT_NOT_FOUND"},
-                    status=status.HTTP_404_NOT_FOUND
+                    {
+                        "detail": "Le marchand spécifié n'existe pas.",
+                        "code": "MERCHANT_NOT_FOUND",
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
                 )
             except Wallet.DoesNotExist:
                 return Response(
-                    {"detail": "Le portefeuille de l'envoyeur n'existe pas.", "code": "WALLET_NOT_FOUND"},
-                    status=status.HTTP_404_NOT_FOUND
+                    {
+                        "detail": "Le portefeuille de l'envoyeur n'existe pas.",
+                        "code": "WALLET_NOT_FOUND",
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
                 )
             except PaymentProcessingError as e:
                 return Response(
                     {"detail": str(e), "code": "PAYMENT_PROCESSING_ERROR"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             except Exception as e:
                 return Response(
-                    {"detail": "Une erreur inattendue est survenue.", "code": "INTERNAL_SERVER_ERROR"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {
+                        "detail": "Une erreur inattendue est survenue.",
+                        "code": "INTERNAL_SERVER_ERROR",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
         # Renvoie les erreurs du serializer avec détail et code
         field, messages = next(iter(serializer.errors.items()))
         return Response(
             {"detail": messages[0], "code": field.upper() + "_ERROR"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )

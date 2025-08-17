@@ -19,23 +19,27 @@ class SendMoneyView(APIView):
         data = request.data.copy()
 
         try:
-            logger.info(f"Data received for SendMoney: {data}")
+            logging.info(f"Received data for SendMoneyView: {data}")
 
             serializer = SendMoneySerializer(data=data, context={"request": request})
             if serializer.is_valid():
                 transaction = serializer.save()
-                logger.info(f"Transaction created: {transaction}")
+                logging.info(f"Transaction created: {transaction}")
+
                 order_id = transaction.order_id
                 amount = transaction.amount
 
-                # Récupérer le wallet de l’utilisateur connecté
                 wallet = (
                     transaction.sender
-                )  # adapte selon ton modèle (sender -> wallet)
+                )
                 new_balance = (
                     wallet.wallet_balance_histories.order_by("-timestamp")
                     .first()
                     .balance_after
+                )
+
+                logger.info(
+                    f"Transaction successful: {order_id}, Amount: {amount}, New Balance: {new_balance}"
                 )
 
                 return Response(
@@ -47,11 +51,10 @@ class SendMoneyView(APIView):
                     status=status.HTTP_201_CREATED,
                 )
             else:
-                # On renvoie seulement le premier message d'erreur avec code
                 field, messages = next(iter(serializer.errors.items()))
                 response_data = {
                     "detail": messages[0],
-                    "code": field.upper() + "_ERROR",
+                    "code": field.upper() if field else "VALIDATION_ERROR",
                 }
                 logger.error(f"Validation error: {response_data}")
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)

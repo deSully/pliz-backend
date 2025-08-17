@@ -7,7 +7,7 @@ from transaction.services.transaction import TransactionService
 
 from transaction.errors import PaymentProcessingError
 
-from transaction.banks.factory import TopUpFactory
+from transaction.partners.factory import PartnerGatewayFactory
 
 
 import logging
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class SendMoneySerializer(serializers.ModelSerializer):
     receiver = serializers.CharField()
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    partner = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Transaction
@@ -25,7 +26,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
         read_only_fields = ["status"]
 
     def validate(self, data):
-        logging.error(f"Validating data: {data}")
+        logging.info(f"Validating data: {data}")
 
         # Vérification que le montant est positif
         if data["amount"] <= 0:
@@ -34,32 +35,18 @@ class SendMoneySerializer(serializers.ModelSerializer):
             )
 
         try:
-            logging.error(f"Validating data: {data}")
+            logging.info(f"Validating data: {data}")
 
-            # Récupérer les wallets de l'envoyeur et du récepteur
-            logger.error(f"Request context: {self.context['request']}")
             sender_wallet = Wallet.objects.get(user=self.context["request"].user)
-            logging.error(f"Sender wallet: {sender_wallet}")
-            receiver_wallet = Wallet.objects.get(phone_number=data["receiver"])
-            logging.error(f"Receiver wallet: {receiver_wallet}")
 
-            logging.error(
-                f"Sender wallet: {sender_wallet}, Receiver wallet: {receiver_wallet}"
-            )
-
-            # Vérifier que l'envoyeur et le récepteur sont actifs (vérification de l'utilisateur lié au wallet)
             if not sender_wallet.user.is_active:
                 raise serializers.ValidationError(
                     detail="L'utilisateur envoyeur est inactif.",
                     code="SENDER_INACTIVE_ERROR",
                 )
-            if not receiver_wallet.user.is_active:
-                raise serializers.ValidationError(
-                    detail="L'utilisateur bénéficiaire est inactif.",
-                    code="RECEIVER_INACTIVE_ERROR",
-                )
 
-            # Vérification du solde de l'envoyeur
+            # Vérification que le portefeuille de l'expéditeur a suffisamment de fonds
+            logger.info(f"Checking sufficient funds for {sender_wallet.user.username}")
             TransactionService.check_sufficient_funds(sender_wallet, data["amount"])
 
         except Wallet.DoesNotExist:
@@ -80,28 +67,54 @@ class SendMoneySerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        logger.error(f"Creating transaction with data: {self.context["request"].user}")
+        logger.info(f"Creating transaction with data: {self.context["request"].user}")
+
         sender_wallet = Wallet.objects.get(user__username=self.context["request"].user)
-        receiver_wallet = Wallet.objects.get(user__username=validated_data["receiver"])
 
-        # Création de la transaction
-        validated_data["status"] = "completed"
-        transaction = Transaction()
-        transaction.order_id = TransactionService.generate_order_id()
-        transaction.receiver = receiver_wallet
-        transaction.sender = sender_wallet
-        transaction.amount = validated_data["amount"]
-        transaction.transaction_type = "send"
-        transaction.status = "completed"
-        transaction.save()
+        if "partner" not in validated_data:
+            # Si pas de partenaire, c'est un transfert interne
+            receiver_wallet = Wallet.objects.get(
+                user__username=validated_data["receiver"]
+            )
+            # Créer la transaction
+            validated_data["status"] = "completed"
+            transaction = Transaction()
+            transaction.order_id = TransactionService.generate_order_id()
+            transaction.receiver = receiver_wallet
+            transaction.sender = sender_wallet
+            transaction.amount = validated_data["amount"]
+            transaction.transaction_type = "send"
+            transaction.status = "completed"
+            transaction.save()
 
-        # Enregistrement des historiques de soldes
-        TransactionService.debit_wallet(
-            sender_wallet, validated_data["amount"], transaction
-        )
-        TransactionService.credit_wallet(
-            receiver_wallet, validated_data["amount"], transaction
-        )
+            TransactionService.debit_wallet(
+                sender_wallet, validated_data["amount"], transaction
+            )
+            TransactionService.credit_wallet(
+                receiver_wallet, validated_data["amount"], transaction
+            )
+
+        else:
+            partner = validated_data["partner"]
+            description = f"Transfer VIA {partner}"
+            transaction = TransactionService.create_pending_transaction(
+                sender_wallet, None, "ENVOI", validated_data["amount"], description
+            )
+
+            result = PartnerGatewayFactory.process_transfer(
+                partner,
+                validated_data["receiver"],
+                transaction
+            )
+
+            if result.get("status") != "success":
+                raise PaymentProcessingError(
+                    detail="Le traitement du paiement a échoué.",
+                    code="PAYMENT_PROCESSING_ERROR",
+                )
+            
+            TransactionService.debit_wallet(sender_wallet, transaction, description)
+            TransactionService.update_transaction_status(transaction, "success")
 
         return transaction
 
@@ -165,7 +178,9 @@ class TopUpSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data["partner"] not in self.PARTNER_DETAILS:
-            raise serializers.ValidationError(detail="Partenaire non supporté", code="INSUPPORTED_PARTNER")
+            raise serializers.ValidationError(
+                detail="Partenaire non supporté", code="INSUPPORTED_PARTNER"
+            )
 
         # Vérification du montant
         if data["amount"] <= 0:
@@ -196,7 +211,7 @@ class TopUpSerializer(serializers.Serializer):
         )
 
         try:
-            TopUpFactory.process_top_up(detail, transaction)
+            PartnerGatewayFactory.process_top_up(detail, transaction)
 
         except PaymentProcessingError as e:
             TransactionService.update_transaction_status(transaction, "failed")
