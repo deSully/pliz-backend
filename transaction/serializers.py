@@ -83,15 +83,15 @@ class SendMoneySerializer(serializers.ModelSerializer):
             transaction.receiver = receiver_wallet
             transaction.sender = sender_wallet
             transaction.amount = validated_data["amount"]
-            transaction.transaction_type = "send"
+            transaction.transaction_type = "ENVOI"
             transaction.status = "completed"
             transaction.save()
 
             TransactionService.debit_wallet(
-                sender_wallet, validated_data["amount"], transaction
+                sender_wallet, transaction.amount, transaction
             )
             TransactionService.credit_wallet(
-                receiver_wallet, validated_data["amount"], transaction
+                receiver_wallet, transaction.amount, transaction
             )
 
         else:
@@ -102,9 +102,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
             )
 
             result = PartnerGatewayFactory.process_transfer(
-                partner,
-                validated_data["receiver"],
-                transaction
+                partner, validated_data["receiver"], transaction
             )
 
             if result.get("status") != "success":
@@ -112,8 +110,10 @@ class SendMoneySerializer(serializers.ModelSerializer):
                     detail="Le traitement du paiement a échoué.",
                     code="PAYMENT_PROCESSING_ERROR",
                 )
-            
-            TransactionService.debit_wallet(sender_wallet, transaction, description)
+
+            TransactionService.debit_wallet(
+                sender_wallet, transaction.amount, transaction, description
+            )
             TransactionService.update_transaction_status(transaction, "success")
 
         return transaction

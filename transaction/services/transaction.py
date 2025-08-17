@@ -33,7 +33,7 @@ class TransactionService:
             )
 
     @staticmethod
-    def debit_wallet(wallet, transaction, description=None):
+    def debit_wallet(wallet, amount, transaction, description=None):
         """Débite le wallet du montant spécifié et enregistre l'historique."""
 
         last_history = None
@@ -44,9 +44,9 @@ class TransactionService:
                 "timestamp"
             )
             balance_before = last_history.balance_after
-            balance_after = last_history.balance_after - Decimal(transaction.amount)
+            balance_after = last_history.balance_after - Decimal(amount)
         except WalletBalanceHistory.DoesNotExist:
-            balance_after = -Decimal(transaction.amount)
+            balance_after = -Decimal(amount)
 
         # Enregistrement dans WalletBalanceHistory
         WalletBalanceHistory.objects.create(
