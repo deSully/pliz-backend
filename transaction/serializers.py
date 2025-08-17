@@ -80,7 +80,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        sender_wallet = Wallet.objects.get(user=validated_data["sender"])
+        sender_wallet = Wallet.objects.get(user=self.context["request"].user)
         receiver_wallet = Wallet.objects.get(user=validated_data["receiver"])
 
         # Création de la transaction
