@@ -7,7 +7,9 @@ from transaction.serializers import SendMoneySerializer
 from drf_yasg.utils import swagger_auto_schema
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class SendMoneyView(APIView):
     permission_classes = [IsAuthenticated]
@@ -21,14 +23,34 @@ class SendMoneyView(APIView):
 
             serializer = SendMoneySerializer(data=data, context={"request": request})
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                transaction = serializer.save()
+                order_id = getattr(transaction, "order_id", transaction.id)
+                amount = transaction.amount
+
+                # Récupérer le wallet de l’utilisateur connecté
+                wallet = (
+                    transaction.sender.wallet
+                )  # adapte selon ton modèle (sender -> wallet)
+                new_balance = (
+                    wallet.wallet_balance_histories.order_by("-timestamp")
+                    .first()
+                    .balance_after
+                )
+
+                return Response(
+                    {
+                        "order_id": order_id,
+                        "amount": str(amount),
+                        "new_balance": str(new_balance),
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
             else:
                 # On renvoie seulement le premier message d'erreur avec code
                 field, messages = next(iter(serializer.errors.items()))
                 response_data = {
                     "detail": messages[0],
-                    "code": field.upper() + "_ERROR"
+                    "code": field.upper() + "_ERROR",
                 }
                 logger.error(f"Validation error: {response_data}")
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
@@ -37,5 +59,5 @@ class SendMoneyView(APIView):
             logger.error(f"Error in SendMoneyView: {str(e)}")
             return Response(
                 {"detail": str(e), "code": "TRANSACTION_FAILED"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
