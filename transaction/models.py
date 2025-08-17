@@ -11,7 +11,7 @@ class Transaction(models.Model):
         ("send", "Envoi"),
         ("receive", "Réception"),
         ("payment", "Paiement Service"),
-    ]
+        ("topup", "Rechargement"),]
 
     TRANSACTION_STATUSES = [
         ("pending", "En attente"),
