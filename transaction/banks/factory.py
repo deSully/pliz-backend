@@ -1,4 +1,8 @@
 from .processors.ecobank import EcobankGateway
+from .processors.orange_money import OrangeMoneyGateway
+from .processors.mtn_money import (
+    MtnMoneyGateway,
+)  # Assuming MTN Money uses the same gateway as Orange Money
 
 
 class TopUpFactory:
@@ -7,21 +11,25 @@ class TopUpFactory:
     """
 
     @staticmethod
-    def get_gateway(bank_name):
+    def get_gateway(partner):
         """
-        Récupère le connecteur de banque en fonction du nom de la banque.
+        Récupère le connecteur du partner.
         """
-        if bank_name == "Ecobank":
+        if partner == "ORANGE_MONEY":
+            return OrangeMoneyGateway()
+        elif partner == "MTN_MONEY":
+            return MtnMoneyGateway()
+        elif partner == "ECONBANK":
             return EcobankGateway()
         else:
-            raise ValueError(f"Banque {bank_name} non supportée.")
+            raise ValueError(f"Partenaire {partner} non supporté.")
 
     @staticmethod
-    def process_top_up(rib, amount):
+    def process_top_up(partner, detail, amount):
         """
         Traite le rechargement en appelant la méthode debit de la banque sélectionnée.
         """
-        bank_gateway = TopUpFactory.get_gateway(rib.banque)  # Choisir la banque
+        topup_factory = TopUpFactory.get_gateway(partner)
         bank_gateway.debit(
             rib, amount
         )  # Appeler la méthode debit de la banque sélectionnée

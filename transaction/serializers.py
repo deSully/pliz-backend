@@ -154,21 +154,24 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class TopUpSerializer(serializers.Serializer):
-    rib_uuid = serializers.UUIDField()
+
+    PARTNER_DETAILS = {
+    "ORANGE_MONEY": "Recharge via Orange Money",
+    "MTN_MONEY": "Recharge via MTN Money",
+    "WAVE": "Recharge via WAVE"
+}
+    
+    detail = serializers.CharField(max_length=255, required=False)
+    partner = serializers.CharField(max_length=50, required=True)
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
     def validate(self, data):
-        user = self.context['request'].user
 
-        # Vérification du RIB
-        try:
-            rib = RIB.objects.get(uuid=data['rib_uuid'], user=user)
-        except RIB.DoesNotExist:
+        if data['partner'] not in self.PARTNER_DETAILS:
             raise serializers.ValidationError({
-                "code": "INVALID_RIB",
-                "message": "Ce RIB n'existe pas ou ne vous appartient pas."
+                "code": "INVALID_PARTNER",
+                "message": f"Le partenaire '{data['partner']}' n'est pas supporté."
             })
-
 
         # Vérification du montant
         if data['amount'] <= 0:
@@ -177,21 +180,21 @@ class TopUpSerializer(serializers.Serializer):
                 "message": "Le montant doit être supérieur à zéro."
             })
 
-
-        # Attacher le RIB à la donnée validée
-        data['rib'] = rib
         return data
 
     def create(self, validated_data):
+
         user = self.context['request'].user
-        rib = validated_data['rib']
+        partner = validated_data['partner']
+        detail = validated_data['detail']
         amount = validated_data['amount']
+
         wallet = Wallet.objects.get(user=user)
 
         # 1. Créer la transaction en attente
-        description = f"Rechargement depuis RIB {rib.banque} - {rib.numero_compte}"
+        description = f"Rechargement depuis RIB {partner} - {detail}"
         transaction = TransactionService.create_pending_transaction(
-            sender=None,  # Car la source est externe (RIB)
+            sender=None, 
             receiver=wallet,
             transaction_type='topup',
             amount=amount,
@@ -199,9 +202,9 @@ class TopUpSerializer(serializers.Serializer):
         )
 
         try:
-            # 2. Débiter le compte bancaire via l'API spécifique
+            # 2. Débiter le compte rechargeur via l'API spécifique
             # Utilisation de TopUpFactory pour traiter la recharge
-            TopUpFactory.process_top_up(rib, amount)
+            TopUpFactory.process_top_up(detail, amount)
 
             # 3. Créditer le wallet du client
             TransactionService.credit_wallet(wallet, amount, transaction, description)
