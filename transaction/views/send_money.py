@@ -10,40 +10,34 @@ import logging
 logger = logging.getLogger(__name__)
 
 class SendMoneyView(APIView):
-
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        request_body=SendMoneySerializer,  # Ajoute cette ligne
-    )
+    @swagger_auto_schema(request_body=SendMoneySerializer)
     def post(self, request, *args, **kwargs):
-        # On récupère l'utilisateur connecté via JWT
         sender = request.user
-
-        # Ajout de l'utilisateur connecté dans les données du serializer
-        data = request.data.copy()  # On copie les données pour y ajouter l'utilisateur connecté
+        data = request.data.copy()
         data['sender'] = sender.id
 
-        # On crée une instance du serializer avec les nouvelles données
         try:
-            logger.error(f"Data received for SendMoney: {data}")
-            logger.error(f"User connected: {sender}")
-            
+            logger.info(f"Data received for SendMoney: {data}")
 
             serializer = SendMoneySerializer(data=data, context={"request": request})
-            logger.info(f"Data received for SendMoney: {data}")
-            logger.info(f"Serializer initialized with data: {serializer.initial_data}")
-
             if serializer.is_valid():
-                serializer.save()  # Crée la transaction et met à jour les soldes
+                serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                logger.error(f"Validation errors ZZZZZZZZ: {serializer.errors}")
-                logger.error(f"Data received: {data}")
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+                # On renvoie seulement le premier message d'erreur avec code
+                field, messages = next(iter(serializer.errors.items()))
+                response_data = {
+                    "detail": messages[0],
+                    "code": field.upper() + "_ERROR"
+                }
+                logger.error(f"Validation error: {response_data}")
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             logger.error(f"Error in SendMoneyView: {str(e)}")
-            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
+            return Response(
+                {"detail": str(e), "code": "TRANSACTION_FAILED"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
