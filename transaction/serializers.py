@@ -81,7 +81,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
                 }
             )
         except serializers.ValidationError as e:
-            raise serializers.ValidationError(str(e))
+            raise e
 
         return data
 
