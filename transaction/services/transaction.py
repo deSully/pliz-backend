@@ -35,8 +35,13 @@ class TransactionService:
     @staticmethod
     def debit_wallet(wallet, amount, transaction, description=None):
         """Débite le wallet du montant spécifié et enregistre l'historique."""
+
+        last_history = None
+        balance_after = 0
         try:
-            last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest("timestamp")
+            last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
+                "timestamp"
+            )
             balance_after = last_history.balance_after - Decimal(amount)
         except WalletBalanceHistory.DoesNotExist:
             balance_after = -Decimal(amount)
@@ -56,9 +61,15 @@ class TransactionService:
     @staticmethod
     def credit_wallet(wallet, amount, transaction, description=None):
         """Crédite le wallet du montant spécifié et enregistre l'historique."""
+
+        last_history = None
+        balance_after = 0
         try:
-            last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest("timestamp")
+            last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
+                "timestamp"
+            )
             balance_after = last_history.balance_after + Decimal(amount)
+
         except WalletBalanceHistory.DoesNotExist:
             balance_after = Decimal(amount)
 
@@ -71,6 +82,7 @@ class TransactionService:
             transaction_type="credit",
             description=description,
         )
+
         return balance_after
 
     @staticmethod
