@@ -22,7 +22,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ["receiver", "amount"]
+        fields = ["receiver", "amount"n, "partner"]
         read_only_fields = ["status"]
 
     def validate(self, data):
