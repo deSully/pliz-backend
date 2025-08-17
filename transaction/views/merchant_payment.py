@@ -25,7 +25,7 @@ class MerchantPaymentView(APIView):
             details = serializer.validated_data["details"]
 
             try:
-                sender_wallet = Wallet.objects.get(user=sender)
+                sender_wallet = Wallet.objects.get(user__username=sender)
                 merchant = Merchant.objects.get(merchant_code=merchant_code)
 
                 response = MerchantPaymentService.process_payment(
