@@ -21,7 +21,10 @@ class TransactionService:
 
         # Vérifie si le solde est suffisant
         if current_balance < amount:
-            raise ValidationError("Fonds insuffisants.")
+            raise ValidationError(
+                detail="Fonds insuffisants.",
+                code="INSUFFICIENT_FUNDS_ERROR"
+            )
 
     @staticmethod
     def debit_wallet(wallet, amount, transaction, description=None):

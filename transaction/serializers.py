@@ -29,7 +29,10 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
         # Vérification que le montant est positif
         if data["amount"] <= 0:
-            raise serializers.ValidationError({"amount": "Le montant doit être positif."})
+            raise serializers.ValidationError({
+                "code": "INVALID_AMOUNT",
+                "message": "Le montant doit être positif."
+            })
         
         try:
 
@@ -48,23 +51,29 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
             # Vérifier que l'envoyeur et le récepteur sont actifs (vérification de l'utilisateur lié au wallet)
             if not sender_wallet.user.is_active:
-                raise serializers.ValidationError("L'utilisateur envoyeur est inactif.")
+                raise serializers.ValidationError({
+                    "code": "SENDER_INACTIVE_ERROR",
+                    "message": "L'utilisateur envoyeur est inactif."
+                })
             if not receiver_wallet.user.is_active:
-                raise serializers.ValidationError(
-                    "L'utilisateur récepteur est inactif."
-                )
+                raise serializers.ValidationError({
+                    "code": "RECEIVER_INACTIVE_ERROR",
+                    "message": "L'utilisateur bénéficiaire est inactif."
+                })
 
             # Vérification du solde de l'envoyeur
             TransactionService.check_sufficient_funds(sender_wallet, data["amount"])
 
         except Wallet.DoesNotExist:
-            raise serializers.ValidationError(
-                "Un des portefeuilles spécifiés n'existe pas."
-            )
+            raise serializers.ValidationError({
+                "code": "WALLET_NOT_FOUND_ERROR",
+                "message": "Un des portefeuilles spécifiés n'existe pas."
+            })
         except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                "Un des utilisateurs spécifiés n'existe pas."
-            )
+            raise serializers.ValidationError({
+                "code": "WALLET_NOT_FOUND_ERROR",
+                "message": "Un des portefeuilles spécifiés n'existe pas."
+            })
         except serializers.ValidationError as e:
             raise serializers.ValidationError(str(e))
 
@@ -105,9 +114,10 @@ class MerchantPaymentSerializer(serializers.Serializer):
         Validation générique pour tous les marchands.
         """
         if data["amount"] <= 0:
-            raise serializers.ValidationError(
-                {"amount": "Le montant doit être positif."}
-            )
+            raise serializers.ValidationError({
+                "code": "INVALID_AMOUNT",
+                "message": "Le montant doit être positif."
+            })
 
         return data
 
@@ -154,11 +164,19 @@ class TopUpSerializer(serializers.Serializer):
         try:
             rib = RIB.objects.get(uuid=data['rib_uuid'], user=user)
         except RIB.DoesNotExist:
-            raise serializers.ValidationError("Ce RIB n'existe pas ou ne vous appartient pas.")
+            raise serializers.ValidationError({
+                "code": "INVALID_RIB",
+                "message": "Ce RIB n'existe pas ou ne vous appartient pas."
+            })
+
 
         # Vérification du montant
         if data['amount'] <= 0:
-            raise serializers.ValidationError("Le montant doit être supérieur à zéro.")
+            raise serializers.ValidationError({
+                "code": "INVALID_AMOUNT",
+                "message": "Le montant doit être supérieur à zéro."
+            })
+
 
         # Attacher le RIB à la donnée validée
         data['rib'] = rib

@@ -48,6 +48,4 @@ class SendMoneyView(APIView):
             logger.error(f"Validation errors: {serializer.errors if serializer else 'No serializer'}")
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Si le serializer n'est pas valide, on retourne les erreurs
-        logger.error(f"Validation errors: {serializer.errors}")
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
