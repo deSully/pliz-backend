@@ -7,13 +7,11 @@ from transaction.serializers import TopUpSerializer
 from drf_yasg.utils import swagger_auto_schema
 
 class TopUpView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(request_body=TopUpSerializer)
     def post(self, request, *args, **kwargs):
         user = request.user
-
         data = request.data.copy()
         data['sender'] = user.id
 
@@ -22,11 +20,17 @@ class TopUpView(APIView):
         if serializer.is_valid():
             transaction = serializer.save()
             return Response({
-                "message": "Compte rechargé avec succès.",
+                "detail": "Compte rechargé avec succès.",
+                "code": "TOPUP_SUCCESS",
                 "transaction_id": transaction.id,
                 "amount": transaction.amount,
                 "status": transaction.status,
                 "timestamp": transaction.created_at
             }, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # On renvoie la première erreur du serializer avec detail et code
+        field, messages = next(iter(serializer.errors.items()))
+        return Response(
+            {"detail": messages[0], "code": field.upper() + "_ERROR"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
