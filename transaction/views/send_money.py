@@ -24,7 +24,8 @@ class SendMoneyView(APIView):
             serializer = SendMoneySerializer(data=data, context={"request": request})
             if serializer.is_valid():
                 transaction = serializer.save()
-                order_id = getattr(transaction, "order_id", transaction.id)
+                logger.info(f"Transaction created: {transaction}")
+                order_id = transaction.order_id
                 amount = transaction.amount
 
                 # Récupérer le wallet de l’utilisateur connecté

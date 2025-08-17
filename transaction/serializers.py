@@ -87,6 +87,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
         # Création de la transaction
         validated_data["status"] = "completed"
         transaction = Transaction()
+        transaction.order_id = TransactionService.generate_order_id()
         transaction.receiver = receiver_wallet
         transaction.sender = sender_wallet
         transaction.amount = validated_data["amount"]

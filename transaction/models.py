@@ -46,7 +46,7 @@ class Transaction(models.Model):
     fee_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
-        return f"Transaction {self.transaction_type} de {self.sender} à {self.receiver} - {self.amount}"
+        return f"Transaction {self.transaction_type} {self.order_id}"
 
     class Meta:
         ordering = ("-timestamp",)
