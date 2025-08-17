@@ -13,7 +13,6 @@ class WalletAdmin(admin.ModelAdmin):
     list_display = ("user", "phone_number", "currency")  # Colonnes visibles
     search_fields = ("user__username", "phone_number", "currency")  # Recherche
     list_filter = ("currency",)  # Filtres latéraux
-    readonly_fields = ("user",)  # Empêche la modification de l'utilisateur lié
     fieldsets = (
         ("Informations du Wallet", {"fields": ("user", "phone_number", "currency")}),
     )
