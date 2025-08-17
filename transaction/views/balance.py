@@ -32,7 +32,7 @@ class BalanceView(APIView):
 
         return Response(
             {
-                "current_balance": wallet.balance,
+                "current_balance": latest_history.balance_after if latest_history else 0,
                 "currency": wallet.currency,
                 "last_transaction": history_data,
             },
