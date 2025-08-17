@@ -56,16 +56,11 @@ class TransactionService:
     @staticmethod
     def credit_wallet(wallet, amount, transaction, description=None):
         """Crédite le wallet du montant spécifié et enregistre l'historique."""
-        # Récupération du dernier historique de solde
-        last_history = WalletBalanceHistory.objects.filter(wallet=wallet)
-
-        if not last_history:
+        try:
+            last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest("timestamp")
+            balance_after = last_history.balance_after + Decimal(amount)
+        except WalletBalanceHistory.DoesNotExist:
             balance_after = Decimal(amount)
-
-        else:
-            balance_after = last_history.latest("timestamp").balance_after + Decimal(
-                amount
-            )
 
         # Enregistrement dans WalletBalanceHistory
         WalletBalanceHistory.objects.create(
