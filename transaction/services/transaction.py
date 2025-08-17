@@ -39,9 +39,11 @@ class TransactionService:
         last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
             "timestamp"
         )
+        if not last_history:
+            balance_after = - Decimal(amount)
 
-        # Nouveau solde
-        balance_after = last_history.balance_after - Decimal(amount)
+        else:
+            balance_after = last_history.balance_after - Decimal(amount)
 
         # Enregistrement dans WalletBalanceHistory
         WalletBalanceHistory.objects.create(
@@ -63,8 +65,11 @@ class TransactionService:
             "timestamp"
         )
 
-        # Nouveau solde
-        balance_after = last_history.balance_after + Decimal(amount)
+        if not last_history:
+            balance_after = Decimal(amount)
+
+        else:
+            balance_after = last_history.balance_after + Decimal(amount)
 
         # Enregistrement dans WalletBalanceHistory
         WalletBalanceHistory.objects.create(
