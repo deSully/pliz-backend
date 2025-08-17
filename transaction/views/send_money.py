@@ -29,7 +29,7 @@ class SendMoneyView(APIView):
 
                 # Récupérer le wallet de l’utilisateur connecté
                 wallet = (
-                    transaction.sender.wallet
+                    transaction.sender
                 )  # adapte selon ton modèle (sender -> wallet)
                 new_balance = (
                     wallet.wallet_balance_histories.order_by("-timestamp")
@@ -39,9 +39,9 @@ class SendMoneyView(APIView):
 
                 return Response(
                     {
-                        "order_id": order_id,
+                        "reference": order_id,
                         "amount": str(amount),
-                        "new_balance": str(new_balance),
+                        "balance_after_operation": str(new_balance),
                     },
                     status=status.HTTP_201_CREATED,
                 )
