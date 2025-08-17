@@ -1,12 +1,12 @@
 # merchants/factory.py
-from transaction.merchants.processors.canalplus import SampleMerchantPaymentProcessor
+from transaction.merchants.processors.canalplus import CanalPlusPaymentProcessor
 
 
 class MerchantPaymentFactory:
     @staticmethod
     def get_merchant_processor(merchant):
         if merchant == 'M2201':
-            return SampleMerchantPaymentProcessor(merchant)
+            return CanalPlusPaymentProcessor(merchant)
         elif merchant == 'YYY':
             pass
         else:
