@@ -20,6 +20,8 @@ class Transaction(models.Model):
         ("cancelled", "Annulée"),
     ]
 
+    order_id = models.CharField(max_length=100, null=True, blank=True)
+
     sender = models.ForeignKey(
         Wallet,
         on_delete=models.SET_NULL,

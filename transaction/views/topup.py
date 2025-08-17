@@ -14,7 +14,6 @@ class TopUpView(APIView):
     def post(self, request, *args, **kwargs):
         user = request.user
 
-        # Ajout de l'utilisateur dans les données du serializer
         data = request.data.copy()
         data['sender'] = user.id
 

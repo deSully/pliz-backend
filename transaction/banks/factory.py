@@ -19,17 +19,15 @@ class TopUpFactory:
             return OrangeMoneyGateway()
         elif partner == "MTN_MONEY":
             return MtnMoneyGateway()
-        elif partner == "ECONBANK":
+        elif partner == "ECOBANK":
             return EcobankGateway()
         else:
             raise ValueError(f"Partenaire {partner} non supporté.")
 
     @staticmethod
-    def process_top_up(partner, detail, amount):
+    def process_top_up(partner, transaction, amount):
         """
         Traite le rechargement en appelant la méthode debit de la banque sélectionnée.
         """
-        topup_factory = TopUpFactory.get_gateway(partner)
-        bank_gateway.debit(
-            rib, amount
-        )  # Appeler la méthode debit de la banque sélectionnée
+        partner_gateway = TopUpFactory.get_gateway(partner)
+        partner_gateway.initiate_payment(transaction, amount) 

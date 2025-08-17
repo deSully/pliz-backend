@@ -4,6 +4,11 @@ from rest_framework.exceptions import ValidationError
 
 from transaction.models import Transaction, WalletBalanceHistory
 
+import random
+import string
+from datetime import datetime
+
+
 class TransactionService:
     @staticmethod
     def check_sufficient_funds(sender_wallet, amount):
@@ -13,7 +18,9 @@ class TransactionService:
         """
         try:
             # Récupère le dernier historique de solde pour le portefeuille donné
-            last_balance_history = WalletBalanceHistory.objects.filter(wallet=sender_wallet).latest('timestamp')
+            last_balance_history = WalletBalanceHistory.objects.filter(
+                wallet=sender_wallet
+            ).latest("timestamp")
             current_balance = last_balance_history.balance_after
         except WalletBalanceHistory.DoesNotExist:
             # Si aucun historique n'existe, le solde est considéré comme 0
@@ -22,15 +29,16 @@ class TransactionService:
         # Vérifie si le solde est suffisant
         if current_balance < amount:
             raise ValidationError(
-                detail="Fonds insuffisants.",
-                code="INSUFFICIENT_FUNDS_ERROR"
+                detail="Fonds insuffisants.", code="INSUFFICIENT_FUNDS_ERROR"
             )
 
     @staticmethod
     def debit_wallet(wallet, amount, transaction, description=None):
         """Débite le wallet du montant spécifié et enregistre l'historique."""
         # Récupération du dernier historique de solde
-        last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest('timestamp')
+        last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
+            "timestamp"
+        )
 
         # Nouveau solde
         balance_after = last_history.balance_after - Decimal(amount)
@@ -42,7 +50,7 @@ class TransactionService:
             balance_after=balance_after,
             transaction=transaction,
             transaction_type="debit",
-            description=description
+            description=description,
         )
 
         return balance_after
@@ -51,7 +59,9 @@ class TransactionService:
     def credit_wallet(wallet, amount, transaction, description=None):
         """Crédite le wallet du montant spécifié et enregistre l'historique."""
         # Récupération du dernier historique de solde
-        last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest('timestamp')
+        last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
+            "timestamp"
+        )
 
         # Nouveau solde
         balance_after = last_history.balance_after + Decimal(amount)
@@ -63,19 +73,27 @@ class TransactionService:
             balance_after=balance_after,
             transaction=transaction,
             transaction_type="credit",
-            description=description
+            description=description,
         )
         return balance_after
 
     @staticmethod
-    def create_pending_transaction(sender_wallet, receiver_wallet, transaction_type, amount, description=None):
+    def create_pending_transaction(
+        sender_wallet,
+        receiver_wallet,
+        transaction_type,
+        amount,
+        description=None,
+        order_id=None,
+    ):
         return Transaction.objects.create(
             sender=sender_wallet,
             receiver=receiver_wallet,
             amount=amount,
             transaction_type=transaction_type,
-            status='pending',
+            status="pending",
             description=description,
+            order_id=order_id or TransactionService.generate_order_id(),
         )
 
     @staticmethod
@@ -83,3 +101,17 @@ class TransactionService:
         transaction.status = status
         transaction.save()
         return transaction
+
+    @staticmethod
+    def generate_order_id(partner: str = None):
+        """
+        Génère un order_id unique pour un partenaire donné.
+        Si partner n'est pas fourni, utilise 'PLZ' par défaut.
+        Format : PARTNER-YYYYMMDD-XXX-XXX-XXX
+        """
+        partner_code = partner.upper() if partner else "PLZ"
+        date_str = datetime.now().strftime("%Y%m%d")
+        random_digits1 = f"{random.randint(100, 999)}"
+        random_digits2 = f"{random.randint(100, 999)}"
+        random_letters = "".join(random.choices(string.ascii_uppercase, k=3))
+        return f"{partner_code}-{date_str}-{random_digits1}-{random_digits2}-{random_letters}"
