@@ -38,7 +38,7 @@ class SendMoneyView(APIView):
                 serializer.save()  # Crée la transaction et met à jour les soldes
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                logger.error(f"Validation errors: {serializer.errors}")
+                logger.error(f"Validation errors ZZZZZZZZ: {serializer.errors}")
                 logger.error(f"Data received: {data}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
