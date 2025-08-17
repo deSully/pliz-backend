@@ -38,10 +38,12 @@ class TransactionService:
 
         last_history = None
         balance_after = 0
+        balance_before = 0
         try:
             last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
                 "timestamp"
             )
+            balance_before = last_history.balance_after
             balance_after = last_history.balance_after - Decimal(amount)
         except WalletBalanceHistory.DoesNotExist:
             balance_after = -Decimal(amount)
@@ -49,7 +51,7 @@ class TransactionService:
         # Enregistrement dans WalletBalanceHistory
         WalletBalanceHistory.objects.create(
             wallet=wallet,
-            balance_before=last_history.balance_after,
+            balance_before=balance_before,
             balance_after=balance_after,
             transaction=transaction,
             transaction_type="debit",
@@ -64,10 +66,13 @@ class TransactionService:
 
         last_history = None
         balance_after = 0
+        balance_before = 0
         try:
             last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
                 "timestamp"
             )
+                        
+            balance_before = last_history.balance_after
             balance_after = last_history.balance_after + Decimal(amount)
 
         except WalletBalanceHistory.DoesNotExist:
@@ -76,7 +81,7 @@ class TransactionService:
         # Enregistrement dans WalletBalanceHistory
         WalletBalanceHistory.objects.create(
             wallet=wallet,
-            balance_before=last_history.balance_after,
+            balance_before=balance_before,
             balance_after=balance_after,
             transaction=transaction,
             transaction_type="credit",
