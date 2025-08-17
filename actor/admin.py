@@ -34,7 +34,6 @@ class MerchantAdmin(admin.ModelAdmin):
         "merchant_code",
     )  # Recherche
     list_filter = ("business_name",)  # Filtres par nom commercial
-    readonly_fields = ("merchant_code", "wallet")  # Champs non modifiables
     fieldsets = (
         (
             "Informations du Marchand",
