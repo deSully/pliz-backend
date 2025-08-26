@@ -8,10 +8,12 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certs:/etc/nginx/certs:rw
-      - ./vhost.d:/etc/nginx/vhost.d:rw
-      - ./html:/usr/share/nginx/html:rw   # webroot partagé pour ACME
+      - /usr/share/nginx/html
+      - ./certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./vhost.d:/etc/nginx/vhost.d:ro
+      - ./staticfiles:/app/staticfiles:ro
+      - ./media:/app/media:ro
     networks:
       - webproxy
     restart: always
@@ -23,13 +25,11 @@ services:
       - nginx-proxy
     environment:
       DEFAULT_EMAIL: contact@barakasn.com
-      NGINX_PROXY_CONTAINER: nginx-proxy
+    volumes_from:
+      - nginx-proxy
     volumes:
-      - ./certs:/etc/nginx/certs:rw
-      - ./vhost.d:/etc/nginx/vhost.d:rw
-      - ./html:/usr/share/nginx/html:rw   # webroot partagé pour le challenge
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./acme:/etc/acme.sh               # persistance des certificats ACME
+      - ./certs:/etc/nginx/certs
     networks:
       - webproxy
     restart: always
@@ -48,7 +48,6 @@ services:
       - .env
     networks:
       - webproxy
-    restart: always
 
   web:
     build: .
@@ -60,21 +59,24 @@ services:
       "
     volumes:
       - .:/app
+      - /home/baraka/ftp/files:/app/imports
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
-      - ./html:/usr/share/nginx/html:rw   # IMPORTANT pour que ACME challenge fonctionne
     expose:
       - "8000"
+    ports:
+      - "8000:8000"
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT}/${POSTGRES_DB}
       - VIRTUAL_HOST=core.plizmoney.com
       - LETSENCRYPT_HOST=core.plizmoney.com
       - LETSENCRYPT_EMAIL=it@plizmoney.com
-    networks:
-      - webproxy
-    restart: always
+    env_file:
+      - .env
     depends_on:
       - db
+    networks:
+      - webproxy
 
 volumes:
   postgres_data:
