@@ -24,12 +24,13 @@ services:
     depends_on:
       - nginx-proxy
     environment:
-      DEFAULT_EMAIL: contact@barakasn.com
+      DEFAULT_EMAIL: williamsko89@gmail.com
     volumes_from:
       - nginx-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
+      - ./acme-data:/etc/acme.sh   # <-- IMPORTANT : persister les certificats
     networks:
       - webproxy
     restart: always
