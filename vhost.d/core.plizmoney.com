@@ -10,5 +10,4 @@ location /media/ {
     expires 30d;
 }
 
-ssl_stapling off;
 ssl_stapling_verify off;
