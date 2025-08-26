@@ -10,10 +10,8 @@ services:
     volumes:
       - ./certs:/etc/nginx/certs:rw
       - ./vhost.d:/etc/nginx/vhost.d:rw
-      - ./html:/usr/share/nginx/html:rw
+      - ./html:/usr/share/nginx/html:rw   # webroot partagé pour ACME
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./staticfiles:/app/staticfiles:ro
-      - ./media:/app/media:ro
     networks:
       - webproxy
     restart: always
@@ -29,9 +27,9 @@ services:
     volumes:
       - ./certs:/etc/nginx/certs:rw
       - ./vhost.d:/etc/nginx/vhost.d:rw
-      - ./html:/usr/share/nginx/html:rw
+      - ./html:/usr/share/nginx/html:rw   # webroot partagé pour le challenge
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./acme:/etc/acme.sh        # stockage persistant des clés ACME
+      - ./acme:/etc/acme.sh               # persistance des certificats ACME
     networks:
       - webproxy
     restart: always
@@ -62,9 +60,9 @@ services:
       "
     volumes:
       - .:/app
-      - /home/baraka/ftp/files:/app/imports
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
+      - ./html:/usr/share/nginx/html:rw   # IMPORTANT pour que ACME challenge fonctionne
     expose:
       - "8000"
     environment:
@@ -72,13 +70,11 @@ services:
       - VIRTUAL_HOST=core.plizmoney.com
       - LETSENCRYPT_HOST=core.plizmoney.com
       - LETSENCRYPT_EMAIL=it@plizmoney.com
-    env_file:
-      - .env
-    depends_on:
-      - db
     networks:
       - webproxy
     restart: always
+    depends_on:
+      - db
 
 volumes:
   postgres_data:
