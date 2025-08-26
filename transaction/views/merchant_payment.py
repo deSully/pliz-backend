@@ -33,12 +33,6 @@ class MerchantPaymentView(APIView):
                     merchant, sender_wallet, amount, details
                 )
 
-                TransactionService.debit_wallet(
-                    sender_wallet, amount, response["transaction"]
-                )
-                TransactionService.credit_wallet(
-                    merchant.wallet, amount, response["transaction"]
-                )
                 return Response(response, status=status.HTTP_200_OK)
 
             except ValueError as e:

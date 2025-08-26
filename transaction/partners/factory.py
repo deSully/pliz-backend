@@ -1,8 +1,8 @@
 from .processors.ecobank import EcobankGateway
-from .processors.orange_money import OrangeMoneyGateway
+from .processors.samir_pay import SamirPaymentGateway
 from .processors.mtn_money import (
     MtnMoneyGateway,
-)  # Assuming MTN Money uses the same gateway as Orange Money
+)
 
 
 class PartnerGatewayFactory:
@@ -10,32 +10,31 @@ class PartnerGatewayFactory:
     Factory pour gérer le rechargement du compte en fonction de la banque sélectionnée.
     """
 
-    @staticmethod
-    def get_gateway(partner):
+    def __init__(self, partner: str):
+        self.partner = partner
+        self.gateway = self._get_gateway()
+
+    def _get_gateway(self):
         """
-        Récupère le connecteur du partner.
+        Retourne le connecteur correspondant au partenaire.
         """
-        if partner == "ORANGE_MONEY":
-            return OrangeMoneyGateway()
-        elif partner == "MTN_MONEY":
+        if self.partner in ["ORANGE_MONEY", "WAVE"]:
+            return SamirPaymentGateway(partner=self.partner)
+        elif self.partner == "MTN_MONEY":
             return MtnMoneyGateway()
-        elif partner == "ECOBANK":
+        elif self.partner == "ECOBANK":
             return EcobankGateway()
         else:
-            raise ValueError(f"Partenaire {partner} non supporté.")
+            raise ValueError(f"Partenaire {self.partner} non supporté.")
 
-    @staticmethod
-    def process_top_up(partner, transaction, amount):
+    def process_top_up(self, transaction, amount: float):
         """
-        Traite le rechargement en appelant la méthode debit de la banque sélectionnée.
+        Traite le rechargement (cash-in).
         """
-        partner_gateway = PartnerGatewayFactory.get_gateway(partner)
-        partner_gateway.initiate_topup(transaction, amount)
+        return self.gateway.initiate_topup(transaction, amount)
 
-    @staticmethod
-    def process_transfer(partner, receiver, transaction):
+    def process_transfer(self, transaction, receiver: str):
         """
-        Traite le transfert en appelant la méthode debit de la banque sélectionnée.
+        Traite le transfert (cash-out).
         """
-        partner_gateway = PartnerGatewayFactory.get_gateway(partner)
-        partner_gateway.initiate_transfer(transaction, receiver)
+        return self.gateway.initiate_transfer(transaction, receiver)

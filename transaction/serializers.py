@@ -3,12 +3,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from .models import Transaction, WalletBalanceHistory
 from actor.models import Wallet
+from actor.merchant_policy import MERCHANT_POLICIES
 from transaction.services.transaction import TransactionService
 
 from transaction.errors import PaymentProcessingError
 
 from transaction.partners.factory import PartnerGatewayFactory
-
 
 import logging
 
@@ -28,7 +28,6 @@ class SendMoneySerializer(serializers.ModelSerializer):
     def validate(self, data):
         logging.info(f"Validating data: {data}")
 
-        # Vérification que le montant est positif
         if data["amount"] <= 0:
             raise serializers.ValidationError(
                 detail="Le montant doit être positif.", code="INVALID_AMOUNT"
@@ -44,8 +43,6 @@ class SendMoneySerializer(serializers.ModelSerializer):
                     detail="L'utilisateur envoyeur est inactif.",
                     code="SENDER_INACTIVE_ERROR",
                 )
-
-            # Vérification que le portefeuille de l'expéditeur a suffisamment de fonds
             logger.info(f"Checking sufficient funds for {sender_wallet.user.username}")
             TransactionService.check_sufficient_funds(sender_wallet, data["amount"])
 
@@ -76,6 +73,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
             receiver_wallet = Wallet.objects.get(
                 user__username=validated_data["receiver"]
             )
+
             # Créer la transaction
             validated_data["status"] = "completed"
             transaction = Transaction()
@@ -101,20 +99,23 @@ class SendMoneySerializer(serializers.ModelSerializer):
                 sender_wallet, None, "ENVOI", validated_data["amount"], description
             )
 
-            result = PartnerGatewayFactory.process_transfer(
-                partner, validated_data["receiver"], transaction
-            )
+            factory = PartnerGatewayFactory(partner)
 
-            if result.get("status") != "success":
+            transaction = factory.process_transfer(
+                transaction, receiver=validated_data["receiver"]
+            )
+            result = transaction.get("result", {})
+
+            TransactionService.update_transaction_status(transaction, result)
+            if result != "success":
                 raise PaymentProcessingError(
-                    detail="Le traitement du paiement a échoué.",
+                    detail="Le traitement du transfer a échoué.",
                     code="PAYMENT_PROCESSING_ERROR",
                 )
 
             TransactionService.debit_wallet(
                 sender_wallet, transaction.amount, transaction, description
             )
-            TransactionService.update_transaction_status(transaction, "success")
 
         return transaction
 
@@ -122,16 +123,31 @@ class SendMoneySerializer(serializers.ModelSerializer):
 class MerchantPaymentSerializer(serializers.Serializer):
     merchant_code = serializers.CharField(max_length=50)
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
-    details = serializers.JSONField()
+    details = serializers.JSONField(required=False)
 
     def validate(self, data):
-        """
-        Validation générique pour tous les marchands.
-        """
-        if data["amount"] <= 0:
+        merchant = data.get("merchant_code")
+        amount = data.get("amount")
+        details = data.get("details") or {}
+
+        # ✅ Vérif générique
+        if amount <= 0:
             raise serializers.ValidationError(
                 detail="Le montant doit être positif.", code="INVALID_AMOUNT"
             )
+
+        # ✅ Lookup policy
+        policy = MERCHANT_POLICIES.get(merchant)
+
+        if policy:
+            if policy.public:  # 🔹 Public → check des champs obligatoires
+                missing = [f for f in policy.required_fields if f not in details]
+                if missing:
+                    raise serializers.ValidationError(
+                        {
+                            "details": f"Champs manquants pour {merchant.upper()} : {', '.join(missing)}"
+                        }
+                    )
 
         return data
 
@@ -211,7 +227,13 @@ class TopUpSerializer(serializers.Serializer):
         )
 
         try:
-            PartnerGatewayFactory.process_top_up(detail, transaction)
+            factory = PartnerGatewayFactory(partner)
+            result = factory.process_top_up(transaction, amount)
+            if result.get("status") != "SUCCESS":
+                raise PaymentProcessingError(
+                    detail="Le traitement du rechargement a échoué.",
+                    code="PAYMENT_PROCESSING_ERROR",
+                )
 
         except PaymentProcessingError as e:
             TransactionService.update_transaction_status(transaction, "failed")
