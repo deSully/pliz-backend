@@ -8,10 +8,12 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - /etc/nginx/vhost.d
       - /usr/share/nginx/html
-      - ./certs:/etc/nginx/certs:ro
+      - ./certs:/etc/nginx/certs:rw
+      - ./vhost.d:/etc/nginx/vhost.d:rw
+      - ./html:/usr/share/nginx/html:rw
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./vhost.d:/etc/nginx/vhost.d:ro
       - ./staticfiles:/app/staticfiles:ro
       - ./media:/app/media:ro
     networks:
@@ -25,11 +27,11 @@ services:
       - nginx-proxy
     environment:
       DEFAULT_EMAIL: contact@barakasn.com
-    volumes_from:
-      - nginx-proxy
     volumes:
+      - ./certs:/etc/nginx/certs:rw
+      - ./vhost.d:/etc/nginx/vhost.d:rw
+      - ./html:/usr/share/nginx/html:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/nginx/certs
     networks:
       - webproxy
     restart: always
@@ -48,6 +50,7 @@ services:
       - .env
     networks:
       - webproxy
+    restart: always
 
   web:
     build: .
@@ -64,8 +67,6 @@ services:
       - ./media:/app/media
     expose:
       - "8000"
-    ports:
-      - "8000:8000"
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT}/${POSTGRES_DB}
       - VIRTUAL_HOST=core.plizmoney.com
@@ -77,6 +78,7 @@ services:
       - db
     networks:
       - webproxy
+    restart: always
 
 volumes:
   postgres_data:
