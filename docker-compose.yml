@@ -28,9 +28,10 @@ services:
     volumes_from:
       - nginx-proxy
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs
-      - ./acme-data:/etc/acme.sh   # <-- IMPORTANT : persister les certificats
+      - ./acme-data:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./vhost.d:/etc/nginx/vhost.d:ro   # <-- IMPORTANT : persister les certificats
     networks:
       - webproxy
     restart: always
