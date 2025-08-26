@@ -9,5 +9,3 @@ location /media/ {
     access_log off;
     expires 30d;
 }
-
-ssl_stapling_verify off;
