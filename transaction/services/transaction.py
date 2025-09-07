@@ -71,7 +71,7 @@ class TransactionService:
             last_history = WalletBalanceHistory.objects.filter(wallet=wallet).latest(
                 "timestamp"
             )
-                        
+
             balance_before = last_history.balance_after
             balance_after = last_history.balance_after + Decimal(amount)
 
@@ -111,7 +111,15 @@ class TransactionService:
 
     @staticmethod
     def update_transaction_status(transaction, status):
-        transaction.status = status
+        transaction.status = status.upper()
+        transaction.save()
+        return transaction
+
+    @staticmethod
+    def add_additional_data(transaction, data):
+        if not transaction.additional_data:
+            transaction.additional_data = {}
+        transaction.additional_data.update(data)
         transaction.save()
         return transaction
 

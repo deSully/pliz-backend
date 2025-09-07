@@ -8,12 +8,15 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /usr/share/nginx/html
+      - html:/usr/share/nginx/html
       - ./certs:/etc/nginx/certs:ro
+      - ./vhost.d:/etc/nginx/vhost.d
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./vhost.d:/etc/nginx/vhost.d:ro
       - ./staticfiles:/app/staticfiles:ro
       - ./media:/app/media:ro
+    environment:
+      # Ajout pour éviter les conflits SSL
+      - ENABLE_IPV6=false
     networks:
       - webproxy
     restart: always
@@ -24,14 +27,14 @@ services:
     depends_on:
       - nginx-proxy
     environment:
-      DEFAULT_EMAIL: williamsko89@gmail.com
-    volumes_from:
-      - nginx-proxy
+      - DEFAULT_EMAIL=williamsko89@gmail.com
+      - NGINX_PROXY_CONTAINER=nginx-proxy
     volumes:
+      - html:/usr/share/nginx/html
       - ./certs:/etc/nginx/certs
+      - ./vhost.d:/etc/nginx/vhost.d
       - ./acme-data:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./vhost.d:/etc/nginx/vhost.d:ro   # <-- IMPORTANT : persister les certificats
     networks:
       - webproxy
     restart: always
@@ -66,8 +69,6 @@ services:
       - ./media:/app/media
     expose:
       - "8000"
-    ports:
-      - "8000:8000"
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${DB_PORT}/${POSTGRES_DB}
       - VIRTUAL_HOST=core.plizmoney.com
@@ -82,6 +83,7 @@ services:
 
 volumes:
   postgres_data:
+  html:
 
 networks:
   webproxy:

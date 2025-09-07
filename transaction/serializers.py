@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import serializers
-from .models import Transaction, WalletBalanceHistory
+from .models import Transaction, WalletBalanceHistory, TransactionType
 from actor.models import Wallet
 from actor.merchant_policy import MERCHANT_POLICIES
 from transaction.services.transaction import TransactionService
@@ -22,7 +22,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ["receiver", "amount", "partner"]
+        fields = ["receiver", "amount"]
         read_only_fields = ["status"]
 
     def validate(self, data):
@@ -81,7 +81,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
             transaction.receiver = receiver_wallet
             transaction.sender = sender_wallet
             transaction.amount = validated_data["amount"]
-            transaction.transaction_type = "ENVOI"
+            transaction.transaction_type = TransactionType.TRANSFER.value
             transaction.status = "completed"
             transaction.save()
 
@@ -96,15 +96,19 @@ class SendMoneySerializer(serializers.ModelSerializer):
             partner = validated_data["partner"]
             description = f"Transfer VIA {partner}"
             transaction = TransactionService.create_pending_transaction(
-                sender_wallet, None, "ENVOI", validated_data["amount"], description
+                sender_wallet,
+                None,
+                TransactionType.TRANSFER.value,
+                validated_data["amount"],
+                description,
             )
 
             factory = PartnerGatewayFactory(partner)
 
-            transaction = factory.process_transfer(
+            response = factory.process_transfer(
                 transaction, receiver=validated_data["receiver"]
             )
-            result = transaction.get("result", {})
+            result = response.get("status", {})
 
             TransactionService.update_transaction_status(transaction, result)
             if result != "success":
@@ -116,6 +120,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
             TransactionService.debit_wallet(
                 sender_wallet, transaction.amount, transaction, description
             )
+            TransactionService.add_additional_data(transaction, response)
 
         return transaction
 
@@ -186,9 +191,9 @@ class TopUpSerializer(serializers.Serializer):
     PARTNER_DETAILS = {
         "ORANGE_MONEY": "Recharge via Orange Money",
         "MTN_MONEY": "Recharge via MTN Money",
+        "WAVE": "Recharge via WAVE",
     }
 
-    detail = serializers.CharField(max_length=255, required=False)
     partner = serializers.CharField(max_length=50, required=True)
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
@@ -209,18 +214,16 @@ class TopUpSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context["request"].user
         partner = validated_data["partner"]
-        detail = validated_data["detail"]
         amount = validated_data["amount"]
 
         wallet = Wallet.objects.get(user=user)
 
-        # 1. Créer la transaction en attente
-        description = f"Rechargement depuis {partner} - {detail}"
+        description = f"Rechargement VIA {partner}"
         order_id = TransactionService.generate_order_id(partner)
         transaction = TransactionService.create_pending_transaction(
             sender=None,
             receiver=wallet,
-            transaction_type="topup",
+            transaction_type=TransactionType.TOPUP.value,
             amount=amount,
             description=description,
             order_id=order_id,
@@ -229,11 +232,15 @@ class TopUpSerializer(serializers.Serializer):
         try:
             factory = PartnerGatewayFactory(partner)
             result = factory.process_top_up(transaction, amount)
-            if result.get("status") != "SUCCESS":
+            status = result.get("status")
+            if status != "PENDING":
                 raise PaymentProcessingError(
                     detail="Le traitement du rechargement a échoué.",
                     code="PAYMENT_PROCESSING_ERROR",
                 )
+
+            TransactionService.update_transaction_status(transaction, status)
+            TransactionService.add_additional_data(transaction, result)
 
         except PaymentProcessingError as e:
             TransactionService.update_transaction_status(transaction, "failed")

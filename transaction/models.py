@@ -4,22 +4,25 @@ from actor.models import Wallet
 from actor.models import Merchant
 from actor.models import Bank
 
+from enum import Enum
+
+
+class TransactionStatus(Enum):
+    PENDING = "PENDING"
+    SUCCESS = "ISSUED"
+    COMPLETED = "COMPLETED"
+    FAILED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+
+class TransactionType(Enum):
+    TRANSFER = "TRANSFER"
+    PAYMENT = "PAYMENT"
+    TOPUP = "TOPUP"
+
 
 # Create your models here.
 class Transaction(models.Model):
-    TRANSACTION_TYPES = [
-        ("send", "Envoi"),
-        ("receive", "Réception"),
-        ("payment", "Paiement Service"),
-        ("topup", "Rechargement"),]
-
-    TRANSACTION_STATUSES = [
-        ("pending", "En attente"),
-        ("completed", "Réussie"),
-        ("failed", "Échouée"),
-        ("cancelled", "Annulée"),
-    ]
-
     order_id = models.CharField(max_length=100, null=True, blank=True)
 
     sender = models.ForeignKey(
@@ -36,14 +39,13 @@ class Transaction(models.Model):
         blank=True,
         related_name="transactions_received",
     )
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    transaction_type = models.CharField(max_length=10, null=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
-    status = models.CharField(
-        max_length=10, choices=TRANSACTION_STATUSES, default="pending"
-    )
+    status = models.CharField(max_length=10, default=TransactionStatus.PENDING.value)
     fee_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    additional_data = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"Transaction {self.transaction_type} {self.order_id}"
@@ -67,9 +69,7 @@ class WalletBalanceHistory(models.Model):
         null=True,
     )
     description = models.TextField(blank=True, null=True)
-    transaction_type = models.CharField(
-        max_length=50, choices=[("send", "Send"), ("receive", "Receive")]
-    )
+    transaction_type = models.CharField(max_length=50)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -86,16 +86,12 @@ class TariffGrid(models.Model):
 
 
 class Fee(models.Model):
-    TRANSACTION_TYPES = [
-        ("send_money", "Envoi d'argent"),
-        ("topup", "Rechargement"),
-        ("merchant_payment", "Paiement marchand"),
-    ]
-
     tariff_grid = models.ForeignKey(
         TariffGrid, on_delete=models.CASCADE, related_name="fees", null=True
     )
-    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPES)
+    transaction_type = models.CharField(
+        max_length=30, default=TransactionType.TRANSFER.value
+    )
 
     min_amount = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
@@ -134,14 +130,11 @@ class Fee(models.Model):
             f"{self.transaction_type} [{self.min_amount}-{self.max_amount}] - {target}"
         )
 
-class FeeDistributionRule(models.Model):
-    TRANSACTION_TYPES = [
-        ("send_money", "Envoi d'argent"),
-        ("topup", "Rechargement"),
-        ("merchant_payment", "Paiement marchand"),
-    ]
 
-    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPES)
+class FeeDistributionRule(models.Model):
+    transaction_type = models.CharField(
+        max_length=30, default=TransactionType.TRANSFER.value
+    )
     merchant = models.ForeignKey(
         Merchant, null=True, blank=True, on_delete=models.CASCADE
     )

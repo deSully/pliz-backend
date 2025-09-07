@@ -10,7 +10,6 @@ class SamirPaymentGateway:
     Connecteur pour effectuer des opérations Cashin et Cashout via l'API SAMIR.
     """
 
-    BASE_URL = f'{os.environ.get("SAMIR_API_BASE_URL")}/api/tiers/payments/send'
 
     def __init__(self, partner="WAVE"):
         self.partner = partner
@@ -32,20 +31,17 @@ class SamirPaymentGateway:
 
     def initiate_topup(
         self,
-        transaction,
-        description="Cashin depuis wallet",
+        transaction
     ):
         """
         Effectue un Cashin (dépôt d'argent depuis un wallet).
         """
-        url = f"{self.BASE_URL}/cashin"
+        url = f'{os.environ.get("SAMIR_API_BASE_URL")}/api/tiers/initPayment'
 
         payload = {
             "orderId": transaction.order_id,
             "amount": float(transaction.amount),
-            "phoneNumber": transaction.sender.user.phone_number,
-            "operatorName": self.partner,
-            "description": description,
+            "telephone": transaction.sender.user.phone_number,
         }
 
         response = requests.post(url, headers=self._headers(), json=payload)

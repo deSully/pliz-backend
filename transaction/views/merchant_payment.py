@@ -7,7 +7,6 @@ from actor.models import Wallet, Merchant
 from transaction.errors import PaymentProcessingError
 from transaction.serializers import MerchantPaymentSerializer
 from transaction.merchants.service import MerchantPaymentService
-from transaction.services.transaction import TransactionService
 
 from drf_yasg.utils import swagger_auto_schema
 

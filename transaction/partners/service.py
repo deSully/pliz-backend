@@ -1,10 +1,9 @@
 from django.db import transaction as db_transaction
 from transaction.services.transaction import TransactionService
 from transaction.errors import PaymentProcessingError
+from transaction.models import TransactionType
 from actor.models import RIB
 from actor.models import Wallet
-
-# Si tu veux plugger une API bancaire externe plus tard, tu peux créer un `BankPaymentGatewayFactory`
 
 
 class BankTopUpService:
@@ -32,7 +31,7 @@ class BankTopUpService:
                 transaction = TransactionService.create_pending_transaction(
                     sender=None,  # pas de wallet émetteur car externe
                     receiver=wallet,
-                    transaction_type="topup",
+                    transaction_type=TransactionType.TOPUP.value,
                     amount=amount,
                     description=description,
                 )

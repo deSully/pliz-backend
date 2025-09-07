@@ -22,10 +22,6 @@ class MerchantPaymentService:
                     sender_wallet, merchant.wallet, "payment", amount, description
                 )
 
-                TransactionService.debit_wallet(
-                    sender_wallet, transaction.amount, transaction, description
-                )
-
                 payment_processor = MerchantPaymentFactory.get_merchant_processor(
                     merchant.merchant_code
                 )
