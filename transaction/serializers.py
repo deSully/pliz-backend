@@ -77,12 +77,12 @@ class SendMoneySerializer(serializers.ModelSerializer):
             # Créer la transaction
             validated_data["status"] = TransactionStatus.SUCCESS.value
             
-            TransactionService.create_pending_transaction(
-                receiver=sender_wallet,
+            transaction =  TransactionService.create_pending_transaction(
+                sender=sender_wallet,
                 receiver=receiver_wallet,
                 transaction_type = TransactionType.TRANSFER.value,
                 amount = validated_data["amount"],
-                TransactionStatus.SUCCESS.value,
+                status=TransactionStatus.SUCCESS.value,
                 order_by=TransactionService.generate_order_id(),
             )
 
