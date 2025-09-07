@@ -13,7 +13,7 @@ from transaction.partners.factory import PartnerGatewayFactory
 import logging
 
 logger = logging.getLogger(__name__)
-+245955940000
+
 
 class SendMoneySerializer(serializers.ModelSerializer):
     receiver = serializers.CharField()
