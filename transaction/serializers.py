@@ -13,7 +13,7 @@ from transaction.partners.factory import PartnerGatewayFactory
 import logging
 
 logger = logging.getLogger(__name__)
-
++245955940000
 
 class SendMoneySerializer(serializers.ModelSerializer):
     receiver = serializers.CharField()
@@ -22,7 +22,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ["receiver", "amount"]
+        fields = ["receiver", "amount", "partner"]
         read_only_fields = ["status"]
 
     def validate(self, data):
