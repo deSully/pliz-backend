@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SendMoneySerializer(serializers.ModelSerializer):
     receiver = serializers.CharField()
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    partner = serializers.CharField(required=False, allow_blank=True)
+    partner = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Transaction
