@@ -82,7 +82,6 @@ class SendMoneySerializer(serializers.ModelSerializer):
                 receiver_wallet=receiver_wallet,
                 transaction_type = TransactionType.TRANSFER.value,
                 amount = validated_data["amount"],
-                status=TransactionStatus.SUCCESS.value,
                 order_id=TransactionService.generate_order_id(),
             )
 
@@ -91,6 +90,9 @@ class SendMoneySerializer(serializers.ModelSerializer):
             )
             TransactionService.credit_wallet(
                 receiver_wallet, transaction.amount, transaction
+            )
+            TransactionService.update_transaction_status(
+                transaction, TransactionStatus.SUCCESS.value
             )
 
         else:
