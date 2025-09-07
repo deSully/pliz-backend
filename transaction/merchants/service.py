@@ -5,6 +5,7 @@ from django.db import transaction as tr
 
 from transaction.services.transaction import TransactionService
 
+from transaction.models import TransactionStatus
 
 class MerchantPaymentService:
     @staticmethod
@@ -25,7 +26,7 @@ class MerchantPaymentService:
                 payment_processor = MerchantPaymentFactory.get_merchant_processor(
                     merchant.merchant_code
                 )
-                response = payment_processor.initiate_payment(amount, details)
+                response = payment_processor.initiate_payment(transaction, details)
                 status = response.get("data", {}).get("status")
                 if status != "success":
                     raise PaymentProcessingError(
@@ -38,7 +39,7 @@ class MerchantPaymentService:
                 TransactionService.debit_wallet(
                     sender_wallet, amount, transaction, description
                 )
-                TransactionService.update_transaction_status(transaction, "success")
+                TransactionService.update_transaction_status(transaction, TransactionStatus.SUCCESS.value)
 
                 return response
 

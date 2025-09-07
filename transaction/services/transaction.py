@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework.exceptions import ValidationError
 
-from transaction.models import Transaction, WalletBalanceHistory
+from transaction.models import Transaction, WalletBalanceHistory, TransactionStatus
 
 import random
 import string
@@ -104,7 +104,7 @@ class TransactionService:
             receiver=receiver_wallet,
             amount=amount,
             transaction_type=transaction_type,
-            status="pending",
+            status=TransactionStatus.PENDING.value,
             description=description,
             order_id=order_id or TransactionService.generate_order_id(),
         )

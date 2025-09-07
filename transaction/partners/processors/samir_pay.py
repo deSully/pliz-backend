@@ -41,7 +41,7 @@ class SamirPaymentGateway:
         payload = {
             "orderId": transaction.order_id,
             "amount": float(transaction.amount),
-            "telephone": transaction.sender.user.phone_number,
+            "telephone": transaction.receiver.user.phone_number,
         }
 
         response = requests.post(url, headers=self._headers(), json=payload)

@@ -9,9 +9,9 @@ from enum import Enum
 
 class TransactionStatus(Enum):
     PENDING = "PENDING"
-    SUCCESS = "ISSUED"
+    SUCCESS = "SUCCESS"
     COMPLETED = "COMPLETED"
-    FAILED = "COMPLETED"
+    FAILED = "FAILED"
     CANCELLED = "CANCELLED"
 
 

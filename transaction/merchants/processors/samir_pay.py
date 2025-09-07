@@ -54,7 +54,7 @@ class SamirPayMerchantPaymentProcessor:
             "amount": float(transaction.amount),
         }
 
-        for detail in self.details:
+        for detail in details:
             payload.update({detail: details[detail]})
 
         response = requests.post(url, headers=self._headers(), json=payload)
