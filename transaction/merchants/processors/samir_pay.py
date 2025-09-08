@@ -2,6 +2,7 @@ import os
 import requests
 import logging
 
+from transaction.models import TransactionStatus
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,8 @@ class SamirPayMerchantPaymentProcessor:
         for detail in details:
             payload.update({detail: details[detail]})
 
+        logger.info(f"Initiating merchant payment with payload: {payload}")
+
         response = requests.post(url, headers=self._headers(), json=payload)
 
         try:
@@ -66,4 +69,4 @@ class SamirPayMerchantPaymentProcessor:
             return data
         except requests.HTTPError as e:
             logger.error(f"Cashout HTTP Error: {e} | Response: {response.text}")
-            return {"error": str(e), "details": response.text}
+            return {"status": TransactionStatus.FAILED.value, "details": response.text}

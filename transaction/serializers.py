@@ -1,7 +1,12 @@
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import serializers
-from .models import Transaction, WalletBalanceHistory, TransactionType, TransactionStatus
+from .models import (
+    Transaction,
+    WalletBalanceHistory,
+    TransactionType,
+    TransactionStatus,
+)
 from actor.models import Wallet
 from actor.merchant_policy import MERCHANT_POLICIES
 from transaction.services.transaction import TransactionService
@@ -33,7 +38,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
                 detail="Le montant doit être positif.", code="INVALID_AMOUNT"
             )
 
-        try:    
+        try:
             logging.info(f"Validating data: {data}")
 
             sender_wallet = Wallet.objects.get(user=self.context["request"].user)
@@ -74,12 +79,12 @@ class SendMoneySerializer(serializers.ModelSerializer):
             )
 
             validated_data["status"] = TransactionStatus.SUCCESS.value
-            
-            transaction =  TransactionService.create_pending_transaction(
+
+            transaction = TransactionService.create_pending_transaction(
                 sender_wallet=sender_wallet,
                 receiver_wallet=receiver_wallet,
-                transaction_type = TransactionType.TRANSFER.value,
-                amount = validated_data["amount"],
+                transaction_type=TransactionType.TRANSFER.value,
+                amount=validated_data["amount"],
                 order_id=TransactionService.generate_order_id(),
             )
 
@@ -95,7 +100,8 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
         else:
             partner = validated_data["partner"]
-            description = f"Transfer VIA {partner}"
+            receiver = validated_data["receiver"]
+            description = f"Transfer VIA {partner} à {receiver}"
             transaction = TransactionService.create_pending_transaction(
                 sender_wallet,
                 None,
@@ -106,9 +112,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
             factory = PartnerGatewayFactory(partner)
 
-            response = factory.process_transfer(
-                transaction, receiver=validated_data["receiver"]
-            )
+            response = factory.process_transfer(transaction, receiver=receiver)
             logger.info(f"Transfer response: {response}")
             result = response.get("status")
             logger.info(f"Transfer result status: {result}")
@@ -246,6 +250,8 @@ class TopUpSerializer(serializers.Serializer):
             TransactionService.add_additional_data(transaction, result)
 
         except PaymentProcessingError as e:
-            TransactionService.update_transaction_status(transaction, TransactionStatus.FAILED.value)
+            TransactionService.update_transaction_status(
+                transaction, TransactionStatus.FAILED.value
+            )
             raise serializers.ValidationError(detail=str(e), code="TRANSACTION_FAILED")
         return transaction

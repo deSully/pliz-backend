@@ -10,6 +10,10 @@ from transaction.merchants.service import MerchantPaymentService
 
 from drf_yasg.utils import swagger_auto_schema
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class MerchantPaymentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -61,6 +65,7 @@ class MerchantPaymentView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             except Exception as e:
+                logger.error(f"Unexpected error: {str(e)}")
                 return Response(
                     {
                         "detail": "Une erreur inattendue est survenue.",
