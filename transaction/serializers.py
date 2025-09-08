@@ -69,12 +69,10 @@ class SendMoneySerializer(serializers.ModelSerializer):
         sender_wallet = Wallet.objects.get(user__username=self.context["request"].user)
 
         if "partner" not in validated_data:
-            # Si pas de partenaire, c'est un transfert interne
             receiver_wallet = Wallet.objects.get(
                 user__username=validated_data["receiver"]
             )
 
-            # Créer la transaction
             validated_data["status"] = TransactionStatus.SUCCESS.value
             
             transaction =  TransactionService.create_pending_transaction(
@@ -111,7 +109,9 @@ class SendMoneySerializer(serializers.ModelSerializer):
             response = factory.process_transfer(
                 transaction, receiver=validated_data["receiver"]
             )
-            result = response.get("status", {})
+            logger.info(f"Transfer response: {response}")
+            result = response.get("status")
+            logger.info(f"Transfer result status: {result}")
 
             TransactionService.update_transaction_status(transaction, result.upper())
             if result != "success":
