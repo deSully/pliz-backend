@@ -2,6 +2,8 @@ import os
 import requests
 import logging
 
+from transaction.models import TransactionStatus
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +55,7 @@ class SamirPaymentGateway:
             return data
         except requests.HTTPError as e:
             logger.error(f"Cashin HTTP Error: {e} | Response: {response.text}")
-            return {"status": str(e), "details": response.text}
+            return {"status": TransactionStatus.FAILED.value, "details": response.text}
 
     def initiate_transfer(
         self,
@@ -88,4 +90,4 @@ class SamirPaymentGateway:
             return data
         except requests.HTTPError as e:
             logger.error(f"Cashout HTTP Error: {e} | Response: {response.text}")
-            return {"status": str(e), "details": response.text}
+            return {"status": TransactionStatus.FAILED.value, "details": response.text}
