@@ -65,7 +65,6 @@ class SamirPaymentGateway:
         """
         url = f'{os.environ.get("SAMIR_API_BASE_URL")}/api/tiers/payments/send'
         payload = {
-            "orderId": transaction.order_id,
             "amount": str(transaction.amount),
             "phoneNumber": receiver,
             "operatorName": self.partner,
