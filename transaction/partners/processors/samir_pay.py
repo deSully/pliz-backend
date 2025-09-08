@@ -42,7 +42,7 @@ class SamirPaymentGateway:
 
         payload = {
             "orderId": transaction.order_id,
-            "amount": float(transaction.amount),
+            "amount": "{:.0f}".format(transaction.amount),
             "telephone": transaction.receiver.user.phone_number,
         }
 
@@ -67,7 +67,7 @@ class SamirPaymentGateway:
         """
         url = f'{os.environ.get("SAMIR_API_BASE_URL")}/api/tiers/payments/send'
         payload = {
-            "amount": str(transaction.amount),
+            "amount": "{:.0f}".format(transaction.amount),
             "phoneNumber": receiver,
             "operatorName": self.partner,
         }

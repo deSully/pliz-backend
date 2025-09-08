@@ -23,7 +23,7 @@ class Wallet(models.Model):
     is_platform = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Wallet de {self.user.username} - {self.phone_number} - {self.currency}"
+        return f"{self.user.first_name} {self.user.last_name}"
 
 
 class Merchant(models.Model):
