@@ -57,4 +57,4 @@ class DjamoPaymentGateway:
             return data
         except requests.HTTPError as e:
             logger.error(f"Cashout HTTP Error: {e} | Response: {response.text}")
-            return {"error": str(e), "details": response.text}
+            return {"status": str(e), "details": response.text}
