@@ -47,12 +47,11 @@ class SamirPayMerchantPaymentProcessor:
         details: dict,
     ):
         """
-        Effectue un Cashout (retrait d'argent vers un wallet).
+        Effectue un paiement marchand via l'API SAMIR.
         """
         url = self._get_merchant_endpoint()
         payload = {
-            "orderId": transaction.order_id,
-            "amount": float(transaction.amount),
+            "amount": "{:.0f}".format(transaction.amount),
         }
 
         for detail in details:
