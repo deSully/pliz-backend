@@ -5,7 +5,7 @@ from django.db import transaction as tr
 
 from transaction.services.transaction import TransactionService
 
-from transaction.models import TransactionStatus
+from transaction.models import TransactionStatus, TransactionType
 
 import logging
 
@@ -30,7 +30,7 @@ class MerchantPaymentService:
                 )
 
                 transaction = TransactionService.create_pending_transaction(
-                    sender_wallet, merchant.wallet, "payment", amount, description
+                    sender_wallet, merchant.wallet, TransactionType.PAYMENT.value, amount, description
                 )
 
                 logger.info(

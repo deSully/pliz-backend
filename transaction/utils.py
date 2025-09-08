@@ -1,8 +1,12 @@
-def identify_wallet_owner(wallet):
-    if hasattr(wallet, 'merchant'):
-        return 'merchant', wallet.merchant
-    if hasattr(wallet, 'bank'):
-        return 'bank', wallet.bank
-    if hasattr(wallet, 'provider'):
-        return 'provider', wallet.provider
-    return 'client', None
+EXTERNAL_REFERENCE_EXTRACTORS = {
+    "djamo": lambda response: response.get("id"),
+    "wave": lambda response: response.get("body", {}).get("id"),
+    "orange_money": lambda response: response.get("body", {}).get("id"),
+}
+
+
+def get_external_reference(partner: str, response: dict):
+    extractor = EXTERNAL_REFERENCE_EXTRACTORS.get(partner.lower())
+    if not extractor:
+        raise ValueError(f"Unsupported partner: {partner}")
+    return extractor(response)

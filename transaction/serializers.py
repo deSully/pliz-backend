@@ -14,6 +14,7 @@ from transaction.services.transaction import TransactionService
 from transaction.errors import PaymentProcessingError
 
 from transaction.partners.factory import PartnerGatewayFactory
+from transaction.utils import get_external_reference
 
 import logging
 
@@ -128,6 +129,11 @@ class SendMoneySerializer(serializers.ModelSerializer):
                 sender_wallet, transaction.amount, transaction, description
             )
             TransactionService.add_additional_data(transaction, response)
+            try:
+                external_reference = get_external_reference(partner, response)
+                TransactionService.add_external_reference(transaction, external_reference)
+            except Exception as e:
+                logger.warning(f"Could not extract external reference: {e}")
 
         return transaction
 

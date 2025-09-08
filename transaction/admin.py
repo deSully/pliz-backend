@@ -11,7 +11,8 @@ class TransactionAdmin(admin.ModelAdmin):
         "amount",
         "status",
         "timestamp",
-        "description"
+        "description",
+        "external_reference"
     )  # Colonnes affichées
     search_fields = (
         "sender__username",

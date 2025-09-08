@@ -46,6 +46,7 @@ class Transaction(models.Model):
     status = models.CharField(max_length=10, default=TransactionStatus.PENDING.value)
     fee_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     additional_data = models.JSONField(null=True, blank=True)
+    external_reference = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"Transaction {self.transaction_type} {self.order_id}"

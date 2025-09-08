@@ -1,12 +1,10 @@
-
-
 from transaction.models import FeeDistribution, FeeDistributionRule
 from actor.models import Merchant, Bank, Provider
 from transaction.services.transaction import TransactionService
-from transaction.utils import identify_wallet_owner
+
 
 class FeeDistributionService:
-
+    @staticmethod
     def identify_wallet_owner(wallet):
         if hasattr(wallet, "merchant"):
             return "merchant", wallet.merchant
@@ -16,7 +14,6 @@ class FeeDistributionService:
             return "provider", wallet.provider
         return "client", None
 
-
     @staticmethod
     def distribute_fee(transaction):
         fee_amount = transaction.fee_applied
@@ -25,13 +22,35 @@ class FeeDistributionService:
 
         tx_type = transaction.transaction_type
 
-        _, sender_owner = identify_wallet_owner(transaction.sender)
-        _, receiver_owner = identify_wallet_owner(transaction.receiver)
+        _, sender_owner = FeeDistributionService.identify_wallet_owner(
+            transaction.sender
+        )
+        _, receiver_owner = FeeDistributionService.identify_wallet_owner(
+            transaction.receiver
+        )
 
         # Qui est qui ?
-        merchant = sender_owner if isinstance(sender_owner, Merchant) else receiver_owner if isinstance(receiver_owner, Merchant) else None
-        bank = sender_owner if isinstance(sender_owner, Bank) else receiver_owner if isinstance(receiver_owner, Bank) else None
-        provider = sender_owner if isinstance(sender_owner, Provider) else receiver_owner if isinstance(receiver_owner, Provider) else None
+        merchant = (
+            sender_owner
+            if isinstance(sender_owner, Merchant)
+            else receiver_owner
+            if isinstance(receiver_owner, Merchant)
+            else None
+        )
+        bank = (
+            sender_owner
+            if isinstance(sender_owner, Bank)
+            else receiver_owner
+            if isinstance(receiver_owner, Bank)
+            else None
+        )
+        provider = (
+            sender_owner
+            if isinstance(sender_owner, Provider)
+            else receiver_owner
+            if isinstance(receiver_owner, Provider)
+            else None
+        )
 
         # Recherche de la règle de répartition
         rule = FeeDistributionService._get_applicable_rule(tx_type, merchant, bank)
@@ -45,9 +64,11 @@ class FeeDistributionService:
                     transaction=transaction,
                     actor_type=actor_type,
                     actor_id=actor.id,
-                    amount=amount
+                    amount=amount,
                 )
-                TransactionService.credit_wallet(actor.wallet, amount, transaction, "Part des frais")
+                TransactionService.credit_wallet(
+                    actor.wallet, amount, transaction, "Part des frais"
+                )
                 distributions.append((actor_type, actor.id, amount))
 
         if rule.provider_percentage and provider:
@@ -62,17 +83,13 @@ class FeeDistributionService:
     @staticmethod
     def _get_applicable_rule(tx_type, merchant=None, bank=None):
         rule = FeeDistributionRule.objects.filter(
-            transaction_type=tx_type,
-            merchant=merchant,
-            is_active=True
+            transaction_type=tx_type, merchant=merchant, is_active=True
         ).first()
         if rule:
             return rule
 
         rule = FeeDistributionRule.objects.filter(
-            transaction_type=tx_type,
-            bank=bank,
-            is_active=True
+            transaction_type=tx_type, bank=bank, is_active=True
         ).first()
         if rule:
             return rule
@@ -81,5 +98,5 @@ class FeeDistributionService:
             transaction_type=tx_type,
             merchant__isnull=True,
             bank__isnull=True,
-            is_active=True
+            is_active=True,
         ).first()

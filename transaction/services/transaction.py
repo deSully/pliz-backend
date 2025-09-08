@@ -122,6 +122,12 @@ class TransactionService:
         transaction.additional_data.update(data)
         transaction.save()
         return transaction
+    
+    @staticmethod
+    def add_external_reference(transaction, reference):
+        transaction.external_reference = reference
+        transaction.save()
+        return transaction
 
     @staticmethod
     def generate_order_id(partner: str = None):
