@@ -71,7 +71,16 @@ class SamirPaymentGateway:
             "operatorName": self.partner,
         }
 
+        logger.info(f"Initiating transfer with payload: {payload}")
+
         response = requests.post(url, headers=self._headers(), json=payload)
+
+        logger.info(f"Samir transfer response status: {response.status_code}")
+        logger.info(f"Samir transfer response text: {response.text}")
+        logger.info(f"Samir transfer response headers: {response.headers}")
+        logger.info(f"Samir transfer response url: {response.url}")
+        logger.info(f"Samir transfer response request: {response.request.__dict__}")
+        logger.info(f"Samir transfer response request body: {response.json()}")
 
         try:
             response.raise_for_status()
