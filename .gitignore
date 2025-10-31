@@ -31,6 +31,6 @@ venv.bak/
 .DS_Store
 
 # Logs
-logs/*
+logs/*.log
 
 e2e/
