@@ -12,3 +12,4 @@ django-admin-rangefilter
 ruff
 pyotp
 twilio
+paho-mqtt

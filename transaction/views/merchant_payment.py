@@ -8,6 +8,7 @@ from transaction.errors import PaymentProcessingError
 from transaction.serializers import MerchantPaymentSerializer
 from transaction.merchants.service import MerchantPaymentService
 from services.throttling import TransactionRateThrottle
+from services.mqtt import mqtt_service
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -74,6 +75,20 @@ class MerchantPaymentView(APIView):
                 response = MerchantPaymentService.process_payment(
                     merchant, sender_wallet, amount, details
                 )
+                
+                # Notification MQTT pour paiement API marchand
+                if hasattr(sender, 'uuid'):
+                    mqtt_service.publish_notification(
+                        user_uuid=str(sender.uuid),
+                        notification_type="merchant_api_payment",
+                        title="🏪 Paiement marchand",
+                        message=f"Paiement de {amount} FCFA via {merchant_code}",
+                        data={
+                            "merchant_code": merchant_code,
+                            "amount": float(amount),
+                            "details": details
+                        }
+                    )
 
                 return Response(response, status=status.HTTP_200_OK)
 

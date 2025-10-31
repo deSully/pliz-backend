@@ -5,6 +5,7 @@ from rest_framework import status
 
 from transaction.serializers import SendMoneySerializer
 from services.throttling import TransactionRateThrottle
+from services.mqtt import mqtt_service
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -77,6 +78,20 @@ class SendMoneyView(APIView):
                 logger.info(
                     f"Transaction successful: {order_id}, Amount: {amount}, New Balance: {new_balance}"
                 )
+                
+                # Notification MQTT initiation
+                if hasattr(request.user, 'uuid'):
+                    mqtt_service.publish_notification(
+                        user_uuid=str(request.user.uuid),
+                        notification_type="transaction_initiated",
+                        title="💸 Envoi en cours",
+                        message=f"Votre envoi de {amount} FCFA est en cours de traitement",
+                        data={
+                            "transaction_id": order_id,
+                            "amount": float(amount),
+                            "receiver": transaction.receiver.phone_number if transaction.receiver else "N/A"
+                        }
+                    )
 
                 return Response(
                     {

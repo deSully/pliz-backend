@@ -3,6 +3,7 @@ from decimal import Decimal
 from rest_framework.exceptions import ValidationError
 
 from transaction.models import Transaction, WalletBalanceHistory, TransactionStatus
+from services.mqtt import mqtt_service
 
 import random
 import string
@@ -143,7 +144,100 @@ class TransactionService:
             f"Type: {transaction.transaction_type}"
         )
         
+        # Envoi des notifications MQTT selon le statut
+        TransactionService._send_status_notifications(transaction, status)
+        
         return transaction
+    
+    @staticmethod
+    def _send_status_notifications(transaction, status):
+        """Envoie les notifications MQTT aux utilisateurs concernés"""
+        status_upper = status.upper()
+        
+        # Notification pour le sender
+        if transaction.sender and hasattr(transaction.sender.user, 'uuid'):
+            sender_uuid = str(transaction.sender.user.uuid)
+            
+            if status_upper == TransactionStatus.SUCCESS.value:
+                if transaction.transaction_type == "TOPUP":
+                    mqtt_service.publish_notification(
+                        user_uuid=sender_uuid,
+                        notification_type="topup_success",
+                        title="✅ Recharge réussie",
+                        message=f"Votre compte a été rechargé de {transaction.amount} FCFA",
+                        data={
+                            "transaction_id": transaction.order_id,
+                            "amount": float(transaction.amount),
+                            "type": transaction.transaction_type
+                        }
+                    )
+                else:
+                    mqtt_service.publish_notification(
+                        user_uuid=sender_uuid,
+                        notification_type="transaction_success",
+                        title="✅ Envoi réussi",
+                        message=f"Envoi de {transaction.amount} FCFA à {transaction.receiver.phone_number} réussi",
+                        data={
+                            "transaction_id": transaction.order_id,
+                            "amount": float(transaction.amount),
+                            "receiver": transaction.receiver.phone_number
+                        }
+                    )
+            
+            elif status_upper == TransactionStatus.FAILED.value:
+                mqtt_service.publish_notification(
+                    user_uuid=sender_uuid,
+                    notification_type="transaction_failed",
+                    title="❌ Transaction échouée",
+                    message=f"La transaction de {transaction.amount} FCFA a échoué",
+                    data={
+                        "transaction_id": transaction.order_id,
+                        "amount": float(transaction.amount),
+                        "type": transaction.transaction_type
+                    }
+                )
+        
+        # Notification pour le receiver
+        if transaction.receiver and hasattr(transaction.receiver.user, 'uuid') and status_upper == TransactionStatus.SUCCESS.value:
+            receiver_uuid = str(transaction.receiver.user.uuid)
+            
+            if transaction.transaction_type == "PAYMENT":
+                # Notification marchand
+                mqtt_service.publish_merchant_notification(
+                    merchant_uuid=receiver_uuid,
+                    payment_data={
+                        "transaction_id": transaction.order_id,
+                        "amount": float(transaction.amount),
+                        "customer_phone": transaction.sender.phone_number if transaction.sender else "N/A",
+                        "description": transaction.description or "",
+                        "timestamp": transaction.created_at.isoformat()
+                    }
+                )
+                
+                mqtt_service.publish_notification(
+                    user_uuid=receiver_uuid,
+                    notification_type="payment_received",
+                    title="🏪 Paiement reçu",
+                    message=f"Vous avez reçu un paiement de {transaction.amount} FCFA",
+                    data={
+                        "transaction_id": transaction.order_id,
+                        "amount": float(transaction.amount),
+                        "customer": transaction.sender.phone_number if transaction.sender else "N/A"
+                    }
+                )
+            else:
+                # Notification utilisateur normal
+                mqtt_service.publish_notification(
+                    user_uuid=receiver_uuid,
+                    notification_type="money_received",
+                    title="💰 Argent reçu",
+                    message=f"Vous avez reçu {transaction.amount} FCFA de {transaction.sender.phone_number if transaction.sender else 'un utilisateur'}",
+                    data={
+                        "transaction_id": transaction.order_id,
+                        "amount": float(transaction.amount),
+                        "sender": transaction.sender.phone_number if transaction.sender else "N/A"
+                    }
+                )
 
     @staticmethod
     def add_additional_data(transaction, data):

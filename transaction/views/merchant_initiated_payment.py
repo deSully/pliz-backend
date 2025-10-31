@@ -9,6 +9,7 @@ from transaction.services.transaction import TransactionService
 from transaction.services.fee import FeeService
 from transaction.models import TransactionType, TransactionStatus
 from services.throttling import TransactionRateThrottle
+from services.mqtt import mqtt_service
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -163,6 +164,20 @@ class MerchantInitiatedPaymentView(APIView):
                         transaction_type=TransactionType.PAYMENT.value,
                         merchant=merchant
                     )
+                    
+                    # Notifications MQTT supplémentaires pour scan & pay
+                    if hasattr(customer_wallet.user, 'uuid'):
+                        mqtt_service.publish_notification(
+                            user_uuid=str(customer_wallet.user.uuid),
+                            notification_type="merchant_payment_success",
+                            title="🏪 Paiement effectué",
+                            message=f"Paiement de {amount} FCFA chez {merchant.business_name}",
+                            data={
+                                "transaction_id": transaction.order_id,
+                                "amount": float(amount),
+                                "merchant": merchant.business_name
+                            }
+                        )
                     
                     return Response(
                         {

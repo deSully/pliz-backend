@@ -5,6 +5,7 @@ from rest_framework import status
 
 from transaction.serializers import TopUpSerializer
 from services.throttling import TransactionRateThrottle
+from services.mqtt import mqtt_service
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -48,6 +49,21 @@ class TopUpView(APIView):
 
         if serializer.is_valid():
             transaction = serializer.save()
+            
+            # Notification MQTT initiation
+            if hasattr(request.user, 'uuid'):
+                mqtt_service.publish_notification(
+                    user_uuid=str(request.user.uuid),
+                    notification_type="topup_initiated",
+                    title="💳 Recharge en cours",
+                    message=f"Votre recharge de {transaction.amount} FCFA est en cours",
+                    data={
+                        "transaction_id": transaction.order_id,
+                        "amount": float(transaction.amount),
+                        "payment_url": transaction.additional_data.get("urlTransaction") if transaction.additional_data else None
+                    }
+                )
+            
             return Response(
                 {
                     "detail": "Topup en cours",
