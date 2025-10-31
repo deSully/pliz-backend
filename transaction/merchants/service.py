@@ -30,7 +30,11 @@ class MerchantPaymentService:
                 )
 
                 transaction = TransactionService.create_pending_transaction(
-                    sender_wallet, merchant.wallet, TransactionType.PAYMENT.value, amount, description
+                    sender_wallet,
+                    merchant.wallet,
+                    TransactionType.PAYMENT.value,
+                    amount,
+                    description,
                 )
 
                 logger.info(
@@ -49,11 +53,11 @@ class MerchantPaymentService:
                     f"Payment processor response for transaction ID {transaction.order_id}: {response}"
                 )
                 status = response.get("data", {}).get("status")
-                if status != "success":
+                if status not in ["success", "pending"]:
                     raise PaymentProcessingError(
                         detail="Le traitement du rechargement a échoué.",
                         code="PAYMENT_PROCESSING_ERROR",
-                    )
+                    ) 
                 TransactionService.credit_wallet(
                     merchant.wallet, amount, transaction, description
                 )

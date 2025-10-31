@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Transaction, Fee, TariffGrid, WalletBalanceHistory
+from .models import (
+    Transaction,
+    Fee,
+    TariffGrid,
+    WalletBalanceHistory,
+    TransactionStatusCheck,
+)
 
 
 @admin.register(Transaction)
@@ -12,7 +18,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "status",
         "timestamp",
         "description",
-        "external_reference"
+        "external_reference",
     )  # Colonnes affichées
     search_fields = (
         "sender__username",
@@ -104,8 +110,6 @@ class FeeAdmin(admin.ModelAdmin):
     autocomplete_fields = ["merchant", "bank", "tariff_grid"]
 
 
-
-
 @admin.register(WalletBalanceHistory)
 class WalletBalanceHistoryAdmin(admin.ModelAdmin):
     list_display = (
@@ -132,3 +136,17 @@ class WalletBalanceHistoryAdmin(admin.ModelAdmin):
         return obj.wallet.user.username
 
     wallet_user.short_description = "Utilisateur du Wallet"
+
+
+@admin.register(TransactionStatusCheck)
+class TransactionStatusCheckAdmin(admin.ModelAdmin):
+    list_display = (
+        "order_id",
+        "external_reference",
+        "status",
+        "transaction_type",
+        "partner",
+        "last_checked_at",
+    )
+    search_fields = ("order_id", "external_reference", "partner")
+    list_filter = ("partner", "status")

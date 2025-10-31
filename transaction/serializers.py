@@ -10,6 +10,7 @@ from .models import (
 from actor.models import Wallet
 from actor.merchant_policy import MERCHANT_POLICIES
 from transaction.services.transaction import TransactionService
+from transaction.services.transaction_status import TransactionStatusService
 
 from transaction.errors import PaymentProcessingError
 
@@ -119,7 +120,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
             logger.info(f"Transfer result status: {result}")
 
             TransactionService.update_transaction_status(transaction, result.upper())
-            if result != "success":
+            if result not in ["success", "pending"]:
                 raise PaymentProcessingError(
                     detail="Le traitement du transfer a échoué.",
                     code="PAYMENT_PROCESSING_ERROR",
@@ -131,9 +132,20 @@ class SendMoneySerializer(serializers.ModelSerializer):
             TransactionService.add_additional_data(transaction, response)
             try:
                 external_reference = get_external_reference(partner, response)
-                TransactionService.add_external_reference(transaction, external_reference)
+                TransactionService.add_external_reference(
+                    transaction, external_reference
+                )
             except Exception as e:
                 logger.warning(f"Could not extract external reference: {e}")
+                external_reference = ""
+
+            TransactionStatusService.register(
+                order_id=transaction.order_id,
+                partner=partner,
+                external_reference=external_reference,
+                transaction_type=transaction.transaction_type,
+                status=result.upper(),
+            )
 
         return transaction
 
@@ -246,7 +258,7 @@ class TopUpSerializer(serializers.Serializer):
             factory = PartnerGatewayFactory(partner)
             result = factory.process_top_up(transaction)
             status = result.get("status")
-            if status != "PENDING":
+            if status not in ["PENDING", "SUCCESS"]:
                 raise PaymentProcessingError(
                     detail="Le traitement du rechargement a échoué.",
                     code="PAYMENT_PROCESSING_ERROR",
@@ -254,6 +266,22 @@ class TopUpSerializer(serializers.Serializer):
 
             TransactionService.update_transaction_status(transaction, status.upper())
             TransactionService.add_additional_data(transaction, result)
+            try:
+                external_reference = get_external_reference(partner, result)
+                TransactionService.add_external_reference(
+                    transaction, external_reference
+                )
+            except Exception as e:
+                logger.warning(f"Could not extract external reference: {e}")
+                external_reference = ""
+
+            TransactionStatusService.register(
+                order_id=order_id,
+                partner=partner,
+                external_reference=external_reference,
+                transaction_type=transaction.transaction_type,
+                status=result.upper(),
+            )
 
         except PaymentProcessingError as e:
             TransactionService.update_transaction_status(

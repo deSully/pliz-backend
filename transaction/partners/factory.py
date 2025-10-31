@@ -41,3 +41,9 @@ class PartnerGatewayFactory:
         Traite le transfert (cash-out).
         """
         return self.gateway.initiate_transfer(transaction, receiver)
+    
+    def get_transaction_status(self, external_reference):
+        """
+        Vérifie le statut d'une transaction via l'API partenaire.
+        """
+        return self.gateway.update_transaction_status(external_reference)

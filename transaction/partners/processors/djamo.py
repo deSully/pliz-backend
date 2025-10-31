@@ -59,3 +59,30 @@ class DjamoPaymentGateway:
         except requests.HTTPError as e:
             logger.error(f"Cashout HTTP Error: {e} | Response: {response.text}")
             return {"status": TransactionStatus.FAILED.value, "details": response.text}
+
+    def update_transaction_status(self, external_reference):
+        """
+        Vérifie le statut d'une transaction via l'API DJAMO.
+        """
+        url = f"{self.base_url}s/{external_reference}"
+
+        response = requests.get(url, headers=self._headers())
+
+        try:
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Djamo status response: {data}")
+            return data
+        except requests.HTTPError as e:
+            logger.error(f"Status Check HTTP Error: {e} | Response: {response.text}")
+            return {
+                "status": TransactionStatus.FAILED.value,
+                "details": response.text,
+                "message": "Erreur lors de la vérification du statut de la transaction.",
+            }
+        except requests.RequestException as e:
+            logger.error(f"Status Check Request Error: {e}")
+            return {
+                "status": TransactionStatus.FAILED.value,
+                "details": str(e),
+            }

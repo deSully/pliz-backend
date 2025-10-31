@@ -172,3 +172,20 @@ class FeeDistribution(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TransactionStatusCheck(models.Model):
+    order_id = models.CharField(max_length=100, db_index=True)
+    external_reference = models.CharField(max_length=200, unique=True)
+    status = models.CharField(max_length=50)
+    transaction_type = models.CharField(max_length=50)
+    partner = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_checked_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Transaction status check"
+        verbose_name_plural = "Transaction status checks"
+
+    def __str__(self):
+        return f"{self.partner} - {self.external_reference} - {self.status}"

@@ -12,7 +12,6 @@ class SamirPaymentGateway:
     Connecteur pour effectuer des opérations Cashin et Cashout via l'API SAMIR.
     """
 
-
     def __init__(self, partner="WAVE"):
         self.partner = partner
 
@@ -31,10 +30,7 @@ class SamirPaymentGateway:
             "Content-Type": "application/json",
         }
 
-    def initiate_topup(
-        self,
-        transaction
-    ):
+    def initiate_topup(self, transaction):
         """
         Effectue un Cashin (dépôt d'argent depuis un wallet).
         """
@@ -90,4 +86,24 @@ class SamirPaymentGateway:
             return data
         except requests.HTTPError as e:
             logger.error(f"Cashout HTTP Error: {e} | Response: {response.text}")
+            return {"status": TransactionStatus.FAILED.value, "details": response.text}
+
+    def update_transaction_status(self, external_reference):
+        """
+        Vérifie le statut d'une transaction via l'API SAMIR.
+        """
+        url = f'{os.environ.get("SAMIR_API_BASE_URL")}/api/tiers/payments/{external_reference}/status'
+
+        response = requests.get(url, headers=self._headers())
+
+        logger.info(f"Check status response status: {response.status_code}")
+        logger.info(f"Check status response text: {response.text}")
+
+        try:
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Check status response data: {data}")
+            return data
+        except requests.HTTPError as e:
+            logger.error(f"Check status HTTP Error: {e} | Response: {response.text}")
             return {"status": TransactionStatus.FAILED.value, "details": response.text}
