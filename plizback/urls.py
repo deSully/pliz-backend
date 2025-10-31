@@ -29,6 +29,8 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from .views import health_check
+
 # Définir les informations de base de l'API
 schema_view = get_schema_view(
     openapi.Info(
@@ -58,6 +60,7 @@ if settings.DEBUG:
 
 urlpatterns += [
     path('admin/', admin.site.urls),
+    path('api/health/', health_check, name='health_check'),
     path('api/actor/', include('actor.urls')),  # Inclus les URLs de l'app 'myapp' sous le préfixe '/api/'
     path('api/transaction/', include('transaction.urls')),  # Inclus les URLs de l'app 'myapp' sous le préfixe '/api/'
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
