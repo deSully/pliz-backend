@@ -15,20 +15,31 @@ class DjamoPaymentGateway:
     def __init__(self, partner="WAVE"):
         self.partner = partner
 
-        self.api_key = os.environ.get("DJAMO_API_KEY")
-        self.secret_key = os.environ.get("DJAMO_SECRET_KEY")
+        self.access_token = os.environ.get("DJAMO_ACCESS_TOKEN")
+        self.secret_key = os.environ.get("DJAMO_SECRET_KEY")  # Pour vérifier les webhooks
+        self.company_id = os.environ.get("DJAMO_COMPANY_ID")
 
-        if not self.api_key or not self.secret_key:
+        if not self.access_token:
             raise ValueError(
-                "Les variables d'environnement DJAMO_API_KEY et DJAMO_SECRET_KEY doivent être définies."
+                "La variable d'environnement DJAMO_ACCESS_TOKEN doit être définie."
             )
-        self.base_url = f'{os.environ.get("DJAMO_API_BASE_URL")}/v1/transaction'
+        if not self.secret_key:
+            raise ValueError(
+                "La variable d'environnement DJAMO_SECRET_KEY doit être définie (pour webhooks)."
+            )
+        if not self.company_id:
+            raise ValueError(
+                "La variable d'environnement DJAMO_COMPANY_ID doit être définie."
+            )
+        
+        self.base_url = f'{os.environ.get("DJAMO_API_BASE_URL", "https://api.djamo.io")}/v1/transaction'
 
     def _headers(self):
         return {
-            "X-API-KEY": self.api_key,
-            "X-SECRET-KEY": self.secret_key,
+            "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
+            "Accept": "*/*",
+            "X-company-Id": self.company_id
         }
 
     def initiate_transfer(

@@ -33,6 +33,7 @@ class LoginView(APIView):
                     "application/json": {
                         "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
                         "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                        "uuid": "550e8400-e29b-41d4-a716-446655440000",
                         "user_type": "merchant",
                         "phone_number": "+221771234567",
                         "first_name": "Mamadou",
@@ -85,6 +86,7 @@ class LoginView(APIView):
             # Préparer la réponse avec les infos utilisateur
             response_data = {
                 **tokens,
+                "uuid": str(user.uuid),
                 "user_type": user.user_type,
                 "phone_number": user.username,
                 "first_name": user.first_name,

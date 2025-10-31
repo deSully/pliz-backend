@@ -2,6 +2,7 @@ from django.urls import path
 from transaction.views.send_money import SendMoneyView
 from transaction.views.merchant_payment import MerchantPaymentView
 from transaction.views.merchant_initiated_payment import MerchantInitiatedPaymentView
+from transaction.views.webhooks import DjamoWebhookView
 
 from transaction.views.history import TransactionHistoryView
 from transaction.views.topup import TopUpView
@@ -28,4 +29,7 @@ urlpatterns = [
 
     # URL pour demander le solde du portefeuille
     path("wallet/balance/", BalanceView.as_view(), name="wallet-balance"),
+    
+    # Webhooks
+    path("webhooks/djamo/", DjamoWebhookView.as_view(), name="djamo-webhook"),
 ]

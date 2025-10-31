@@ -217,14 +217,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
     """
     wallet = serializers.SerializerMethodField()
     merchant = serializers.SerializerMethodField()
+    uuid = serializers.UUIDField(read_only=True)
     
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'username', 'phone_number', 'first_name', 'last_name',
+            'id', 'uuid', 'username', 'phone_number', 'first_name', 'last_name',
             'email', 'user_type', 'is_subscribed', 'wallet', 'merchant'
         ]
-        read_only_fields = ['id', 'username', 'user_type']
+        read_only_fields = ['id', 'uuid', 'username', 'user_type']
     
     def get_phone_number(self, obj):
         return obj.username

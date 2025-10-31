@@ -66,20 +66,77 @@ class MQTTService:
         """Callback appelé après publication"""
         logger.debug(f"Message published successfully. MID: {mid}")
     
-    def publish_notification(
+    def publish_transaction_notification(
         self, 
-        user_uuid: str, 
-        notification_type: str,
+        user_uuid: str,
+        action: str,
+        status: str,
+        title: str,
+        message: str,
+        transaction_data: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """
+        Publie une notification de transaction
+        
+        Args:
+            user_uuid: UUID de l'utilisateur
+            action: Action (send_money, receive_money, topup, payment)
+            status: Statut (pending, success, failed)
+            title: Titre de la notification
+            message: Message de la notification
+            transaction_data: Données de la transaction (optionnel)
+        
+        Returns:
+            bool: True si la publication a réussi
+        """
+        if not self._client:
+            logger.warning("MQTT client not initialized. Skipping notification.")
+            return False
+        
+        try:
+            topic = f"pliz/{user_uuid}/notifications"
+            
+            data = transaction_data or {}
+            data["action"] = action
+            data["status"] = status
+            
+            payload = {
+                "type": "transaction",
+                "title": title,
+                "message": message,
+                "data": data
+            }
+            
+            result = self._client.publish(
+                topic,
+                payload=json.dumps(payload),
+                qos=1,
+                retain=False
+            )
+            
+            if result.rc == mqtt.MQTT_ERR_SUCCESS:
+                logger.info(f"Transaction notification sent to {user_uuid}: {action} - {status}")
+                return True
+            else:
+                logger.error(f"Failed to publish notification. RC: {result.rc}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error publishing notification: {e}")
+            return False
+    
+    def publish_system_notification(
+        self,
+        user_uuid: str,
         title: str,
         message: str,
         data: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
-        Publie une notification pour un utilisateur
+        Publie une notification système
         
         Args:
             user_uuid: UUID de l'utilisateur
-            notification_type: Type de notification (transaction, payment, topup, error, etc.)
             title: Titre de la notification
             message: Message de la notification
             data: Données additionnelles (optionnel)
@@ -95,10 +152,9 @@ class MQTTService:
             topic = f"pliz/{user_uuid}/notifications"
             
             payload = {
-                "type": notification_type,
+                "type": "system",
                 "title": title,
                 "message": message,
-                "timestamp": None,  # Will be set by timestamp on client side
                 "data": data or {}
             }
             
@@ -110,7 +166,7 @@ class MQTTService:
             )
             
             if result.rc == mqtt.MQTT_ERR_SUCCESS:
-                logger.info(f"Notification sent to {user_uuid}: {notification_type}")
+                logger.info(f"System notification sent to {user_uuid}")
                 return True
             else:
                 logger.error(f"Failed to publish notification. RC: {result.rc}")
@@ -120,45 +176,7 @@ class MQTTService:
             logger.error(f"Error publishing notification: {e}")
             return False
     
-    def publish_merchant_notification(
-        self,
-        merchant_uuid: str,
-        payment_data: Dict[str, Any]
-    ) -> bool:
-        """
-        Publie une notification de paiement pour un marchand
-        
-        Args:
-            merchant_uuid: UUID du marchand
-            payment_data: Données du paiement
-        
-        Returns:
-            bool: True si la publication a réussi
-        """
-        if not self._client:
-            logger.warning("MQTT client not initialized. Skipping notification.")
-            return False
-        
-        try:
-            topic = f"pliz/{merchant_uuid}/payments"
-            
-            result = self._client.publish(
-                topic,
-                payload=json.dumps(payment_data),
-                qos=1,
-                retain=False
-            )
-            
-            if result.rc == mqtt.MQTT_ERR_SUCCESS:
-                logger.info(f"Payment notification sent to merchant {merchant_uuid}")
-                return True
-            else:
-                logger.error(f"Failed to publish merchant notification. RC: {result.rc}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Error publishing merchant notification: {e}")
-            return False
+
     
     def disconnect(self):
         """Déconnecte proprement du broker MQTT"""

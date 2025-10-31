@@ -1,4 +1,4 @@
-.PHONY: help clean test run migrate makemigrations shell superuser install dev docker-build docker-up docker-down docker-logs
+.PHONY: help clean test run migrate makemigrations shell superuser install dev docker-build docker-up docker-down docker-logs setup-webhooks list-webhooks delete-webhooks
 
 help:
 	@echo "Commandes disponibles:"
@@ -14,6 +14,9 @@ help:
 	@echo "  make docker-up      - Démarre les conteneurs Docker"
 	@echo "  make docker-down    - Arrête les conteneurs Docker"
 	@echo "  make docker-logs    - Affiche les logs Docker"
+	@echo "  make setup-webhooks - Configure les webhooks Djamo (prod)"
+	@echo "  make list-webhooks  - Liste les webhooks Djamo"
+	@echo "  make delete-webhooks - Supprime tous les webhooks Djamo"
 
 clean:
 	@echo "🧹 Nettoyage des fichiers Python..."
@@ -84,3 +87,17 @@ docker-clean:
 	@echo "🧹 Nettoyage Docker complet..."
 	docker-compose down -v
 	@echo "✅ Nettoyage Docker terminé!"
+
+setup-webhooks:
+	@echo "🔗 Configuration des webhooks Djamo..."
+	python manage.py setup_djamo_webhooks --base-url https://core.plizmoney.com
+	@echo "✅ Webhooks configurés!"
+
+list-webhooks:
+	@echo "📋 Liste des webhooks Djamo..."
+	python manage.py setup_djamo_webhooks --list
+
+delete-webhooks:
+	@echo "🗑️  Suppression des webhooks Djamo..."
+	python manage.py setup_djamo_webhooks --delete-all
+	@echo "✅ Webhooks supprimés!"

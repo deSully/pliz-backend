@@ -52,12 +52,13 @@ class TopUpView(APIView):
             
             # Notification MQTT initiation
             if hasattr(request.user, 'uuid'):
-                mqtt_service.publish_notification(
+                mqtt_service.publish_transaction_notification(
                     user_uuid=str(request.user.uuid),
-                    notification_type="topup_initiated",
+                    action="topup",
+                    status="pending",
                     title="💳 Recharge en cours",
                     message=f"Votre recharge de {transaction.amount} FCFA est en cours",
-                    data={
+                    transaction_data={
                         "transaction_id": transaction.order_id,
                         "amount": float(transaction.amount),
                         "payment_url": transaction.additional_data.get("urlTransaction") if transaction.additional_data else None

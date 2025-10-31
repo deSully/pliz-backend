@@ -160,24 +160,25 @@ class TransactionService:
             
             if status_upper == TransactionStatus.SUCCESS.value:
                 if transaction.transaction_type == "TOPUP":
-                    mqtt_service.publish_notification(
+                    mqtt_service.publish_transaction_notification(
                         user_uuid=sender_uuid,
-                        notification_type="topup_success",
+                        action="topup",
+                        status="success",
                         title="✅ Recharge réussie",
                         message=f"Votre compte a été rechargé de {transaction.amount} FCFA",
-                        data={
+                        transaction_data={
                             "transaction_id": transaction.order_id,
-                            "amount": float(transaction.amount),
-                            "type": transaction.transaction_type
+                            "amount": float(transaction.amount)
                         }
                     )
                 else:
-                    mqtt_service.publish_notification(
+                    mqtt_service.publish_transaction_notification(
                         user_uuid=sender_uuid,
-                        notification_type="transaction_success",
+                        action="send_money",
+                        status="success",
                         title="✅ Envoi réussi",
                         message=f"Envoi de {transaction.amount} FCFA à {transaction.receiver.phone_number} réussi",
-                        data={
+                        transaction_data={
                             "transaction_id": transaction.order_id,
                             "amount": float(transaction.amount),
                             "receiver": transaction.receiver.phone_number
@@ -185,15 +186,16 @@ class TransactionService:
                     )
             
             elif status_upper == TransactionStatus.FAILED.value:
-                mqtt_service.publish_notification(
+                action = "topup" if transaction.transaction_type == "TOPUP" else "send_money"
+                mqtt_service.publish_transaction_notification(
                     user_uuid=sender_uuid,
-                    notification_type="transaction_failed",
+                    action=action,
+                    status="failed",
                     title="❌ Transaction échouée",
                     message=f"La transaction de {transaction.amount} FCFA a échoué",
-                    data={
+                    transaction_data={
                         "transaction_id": transaction.order_id,
-                        "amount": float(transaction.amount),
-                        "type": transaction.transaction_type
+                        "amount": float(transaction.amount)
                     }
                 )
         
@@ -203,23 +205,13 @@ class TransactionService:
             
             if transaction.transaction_type == "PAYMENT":
                 # Notification marchand
-                mqtt_service.publish_merchant_notification(
-                    merchant_uuid=receiver_uuid,
-                    payment_data={
-                        "transaction_id": transaction.order_id,
-                        "amount": float(transaction.amount),
-                        "customer_phone": transaction.sender.phone_number if transaction.sender else "N/A",
-                        "description": transaction.description or "",
-                        "timestamp": transaction.created_at.isoformat()
-                    }
-                )
-                
-                mqtt_service.publish_notification(
+                mqtt_service.publish_transaction_notification(
                     user_uuid=receiver_uuid,
-                    notification_type="payment_received",
+                    action="payment",
+                    status="success",
                     title="🏪 Paiement reçu",
                     message=f"Vous avez reçu un paiement de {transaction.amount} FCFA",
-                    data={
+                    transaction_data={
                         "transaction_id": transaction.order_id,
                         "amount": float(transaction.amount),
                         "customer": transaction.sender.phone_number if transaction.sender else "N/A"
@@ -227,12 +219,13 @@ class TransactionService:
                 )
             else:
                 # Notification utilisateur normal
-                mqtt_service.publish_notification(
+                mqtt_service.publish_transaction_notification(
                     user_uuid=receiver_uuid,
-                    notification_type="money_received",
+                    action="receive_money",
+                    status="success",
                     title="💰 Argent reçu",
                     message=f"Vous avez reçu {transaction.amount} FCFA de {transaction.sender.phone_number if transaction.sender else 'un utilisateur'}",
-                    data={
+                    transaction_data={
                         "transaction_id": transaction.order_id,
                         "amount": float(transaction.amount),
                         "sender": transaction.sender.phone_number if transaction.sender else "N/A"

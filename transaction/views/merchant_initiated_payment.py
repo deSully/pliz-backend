@@ -167,12 +167,13 @@ class MerchantInitiatedPaymentView(APIView):
                     
                     # Notifications MQTT supplémentaires pour scan & pay
                     if hasattr(customer_wallet.user, 'uuid'):
-                        mqtt_service.publish_notification(
+                        mqtt_service.publish_transaction_notification(
                             user_uuid=str(customer_wallet.user.uuid),
-                            notification_type="merchant_payment_success",
+                            action="payment",
+                            status="success",
                             title="🏪 Paiement effectué",
                             message=f"Paiement de {amount} FCFA chez {merchant.business_name}",
-                            data={
+                            transaction_data={
                                 "transaction_id": transaction.order_id,
                                 "amount": float(amount),
                                 "merchant": merchant.business_name

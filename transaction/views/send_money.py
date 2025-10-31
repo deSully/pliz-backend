@@ -81,12 +81,13 @@ class SendMoneyView(APIView):
                 
                 # Notification MQTT initiation
                 if hasattr(request.user, 'uuid'):
-                    mqtt_service.publish_notification(
+                    mqtt_service.publish_transaction_notification(
                         user_uuid=str(request.user.uuid),
-                        notification_type="transaction_initiated",
+                        action="send_money",
+                        status="pending",
                         title="💸 Envoi en cours",
                         message=f"Votre envoi de {amount} FCFA est en cours de traitement",
-                        data={
+                        transaction_data={
                             "transaction_id": order_id,
                             "amount": float(amount),
                             "receiver": transaction.receiver.phone_number if transaction.receiver else "N/A"

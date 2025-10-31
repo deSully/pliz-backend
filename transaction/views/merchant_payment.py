@@ -78,12 +78,13 @@ class MerchantPaymentView(APIView):
                 
                 # Notification MQTT pour paiement API marchand
                 if hasattr(sender, 'uuid'):
-                    mqtt_service.publish_notification(
+                    mqtt_service.publish_transaction_notification(
                         user_uuid=str(sender.uuid),
-                        notification_type="merchant_api_payment",
+                        action="payment",
+                        status="success",
                         title="🏪 Paiement marchand",
                         message=f"Paiement de {amount} FCFA via {merchant_code}",
-                        data={
+                        transaction_data={
                             "merchant_code": merchant_code,
                             "amount": float(amount),
                             "details": details
