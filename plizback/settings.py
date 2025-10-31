@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',  # Ajouter pour le refresh token
     'drf_yasg',
 
     'actor',
@@ -149,6 +150,16 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",  # Utilisateurs non authentifiés
+        "user": "1000/hour",  # Utilisateurs authentifiés (par défaut)
+        "auth": "10/minute",  # Pour login et OTP
+        "transactions": "50/minute",  # Pour les transactions
+    },
 }
 
 
@@ -178,14 +189,59 @@ CSRF_TRUSTED_ORIGINS = ['https://core.plizmoney.com']
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} {name} {module} - {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "simple": {
+            "format": "[{levelname}] {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
-            "level": "DEBUG",  # change le niveau à DEBUG si tu veux tout voir
+            "level": "INFO",
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file_transactions": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs", "transactions.log"),
+            "maxBytes": 1024 * 1024 * 10,  # 10MB
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+        "file_errors": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs", "errors.log"),
+            "maxBytes": 1024 * 1024 * 10,  # 10MB
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "transaction": {
+            "handlers": ["console", "file_transactions"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "actor": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["console", "file_errors"],
+            "level": "WARNING",
+            "propagate": False,
         },
     },
     "root": {
         "handlers": ["console"],
-        "level": "DEBUG",  # DEBUG => affiche DEBUG, INFO, WARNING, ERROR, CRITICAL
+        "level": "INFO",
     },
 }

@@ -7,8 +7,10 @@ from actor.models import Wallet, Merchant
 from transaction.errors import PaymentProcessingError
 from transaction.serializers import MerchantPaymentSerializer
 from transaction.merchants.service import MerchantPaymentService
+from services.throttling import TransactionRateThrottle
 
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 import logging
 
@@ -17,8 +19,45 @@ logger = logging.getLogger(__name__)
 
 class MerchantPaymentView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [TransactionRateThrottle]
 
-    @swagger_auto_schema(request_body=MerchantPaymentSerializer)
+    @swagger_auto_schema(
+        operation_description="Payer un marchand (Woyofal, Rapido, Airtime, etc.) via leur API spécifique",
+        request_body=MerchantPaymentSerializer,
+        responses={
+            200: openapi.Response(
+                description="Paiement marchand effectué avec succès",
+                examples={
+                    "application/json": {
+                        "status": "success",
+                        "data": {
+                            "order_id": "PAY-20251031-ABC123",
+                            "amount": 2500.00,
+                            "merchant_code": "WOYOFAL"
+                        }
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Fonds insuffisants ou champs manquants",
+                examples={
+                    "application/json": {
+                        "detail": "Le solde est insuffisant pour effectuer cette transaction.",
+                        "code": "INSUFFICIENT_FUNDS"
+                    }
+                }
+            ),
+            404: openapi.Response(
+                description="Marchand non trouvé",
+                examples={
+                    "application/json": {
+                        "detail": "Le marchand spécifié n'existe pas.",
+                        "code": "MERCHANT_NOT_FOUND"
+                    }
+                }
+            )
+        }
+    )
     def post(self, request, *args, **kwargs):
         sender = request.user
         serializer = MerchantPaymentSerializer(data=request.data)

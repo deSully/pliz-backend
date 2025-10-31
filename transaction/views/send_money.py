@@ -4,7 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from transaction.serializers import SendMoneySerializer
+from services.throttling import TransactionRateThrottle
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 import logging
 
@@ -13,8 +15,42 @@ logger = logging.getLogger(__name__)
 
 class SendMoneyView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [TransactionRateThrottle]
 
-    @swagger_auto_schema(request_body=SendMoneySerializer)
+    @swagger_auto_schema(
+        operation_description="Envoyer de l'argent - Transfert interne ou via partenaire (Wave, Orange Money, MTN)",
+        request_body=SendMoneySerializer,
+        responses={
+            201: openapi.Response(
+                description="Transfert effectué avec succès",
+                examples={
+                    "application/json": {
+                        "reference": "TRF-20251031-ABC123",
+                        "amount": "5000.00",
+                        "balance_after_operation": "45000.00"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Fonds insuffisants ou données invalides",
+                examples={
+                    "application/json": {
+                        "detail": "Le solde est insuffisant pour effectuer cette transaction.",
+                        "code": "INSUFFICIENT_FUNDS"
+                    }
+                }
+            ),
+            500: openapi.Response(
+                description="Erreur lors du traitement",
+                examples={
+                    "application/json": {
+                        "detail": "Le traitement du transfer a échoué.",
+                        "code": "PAYMENT_PROCESSING_ERROR"
+                    }
+                }
+            )
+        }
+    )
     def post(self, request, *args, **kwargs):
         data = request.data.copy()
 

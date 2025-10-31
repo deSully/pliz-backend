@@ -4,13 +4,41 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from transaction.serializers import TopUpSerializer
+from services.throttling import TransactionRateThrottle
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class TopUpView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [TransactionRateThrottle]
 
-    @swagger_auto_schema(request_body=TopUpSerializer)
+    @swagger_auto_schema(
+        operation_description="Recharger son wallet via Orange Money, MTN Money ou Wave",
+        request_body=TopUpSerializer,
+        responses={
+            201: openapi.Response(
+                description="Rechargement initié - Suivre l'URL de paiement",
+                examples={
+                    "application/json": {
+                        "detail": "Topup en cours",
+                        "code": "TOPUP_PENDING",
+                        "transaction_id": "TOP-20251031-XYZ789",
+                        "payment_url": "https://payment.wave.com/checkout/abc123"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Partenaire non supporté ou montant invalide",
+                examples={
+                    "application/json": {
+                        "detail": "Partenaire non supporté",
+                        "code": "PARTNER_ERROR"
+                    }
+                }
+            )
+        }
+    )
     def post(self, request, *args, **kwargs):
         user = request.user
         data = request.data.copy()

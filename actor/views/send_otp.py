@@ -20,10 +20,29 @@ class SendOTPView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = ['services.throttling.AuthRateThrottle']
 
     @swagger_auto_schema(
-        request_body=SendOTPSerializer,  # Ajoute cette ligne
-        responses={200: openapi.Response("OTP envoyé avec succès")},
+        operation_description="Envoyer un code OTP par SMS pour vérification",
+        request_body=SendOTPSerializer,
+        responses={
+            200: openapi.Response(
+                description="OTP envoyé avec succès",
+                examples={
+                    "application/json": {
+                        "message": "OTP envoyé avec succès. Vérifiez votre SMS - 123456"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Numéro de téléphone invalide",
+                examples={
+                    "application/json": {
+                        "phone_number": ["Ce champ est requis."]
+                    }
+                }
+            )
+        }
     )
     def post(self, request, *args, **kwargs):
         # Sérialisation des données reçues

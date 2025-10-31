@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction as db_transaction
 
 from rest_framework import serializers
 from .models import (
@@ -16,6 +17,7 @@ from transaction.errors import PaymentProcessingError
 
 from transaction.partners.factory import PartnerGatewayFactory
 from transaction.utils import get_external_reference
+from transaction.services.fee import FeeService
 
 import logging
 
@@ -70,6 +72,7 @@ class SendMoneySerializer(serializers.ModelSerializer):
 
         return data
 
+    @db_transaction.atomic
     def create(self, validated_data):
         logger.info(f"Creating transaction with data: {self.context["request"].user}")
 
@@ -96,8 +99,17 @@ class SendMoneySerializer(serializers.ModelSerializer):
             TransactionService.credit_wallet(
                 receiver_wallet, transaction.amount, transaction
             )
+            
             TransactionService.update_transaction_status(
                 transaction, TransactionStatus.SUCCESS.value
+            )
+            
+            # Appliquer les frais après confirmation du succès
+            FeeService.apply_fee(
+                user=self.context['request'].user,
+                wallet=sender_wallet,
+                transaction=transaction,
+                transaction_type=TransactionType.TRANSFER.value
             )
 
         else:
@@ -236,6 +248,7 @@ class TopUpSerializer(serializers.Serializer):
 
         return data
 
+    @db_transaction.atomic
     def create(self, validated_data):
         user = self.context["request"].user
         partner = validated_data["partner"]
@@ -282,6 +295,15 @@ class TopUpSerializer(serializers.Serializer):
                 transaction_type=transaction.transaction_type,
                 status=result.upper(),
             )
+            
+            # Appliquer les frais après confirmation du succès (si status = SUCCESS)
+            if status.upper() == "SUCCESS":
+                FeeService.apply_fee(
+                    user=user,
+                    wallet=wallet,
+                    transaction=transaction,
+                    transaction_type=TransactionType.TOPUP.value
+                )
 
         except PaymentProcessingError as e:
             TransactionService.update_transaction_status(

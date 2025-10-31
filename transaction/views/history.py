@@ -12,15 +12,35 @@ class TransactionHistoryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'Authorization',
-                openapi.IN_HEADER,
-                description="Token JWT (format: Bearer <token>)",
-                type=openapi.TYPE_STRING,
-                required=True
+        operation_description="Récupérer l'historique complet des transactions de l'utilisateur (envoyées et reçues)",
+        responses={
+            200: openapi.Response(
+                description="Liste des transactions",
+                examples={
+                    "application/json": [
+                        {
+                            "id": 1,
+                            "transaction_type": "TRANSFER",
+                            "amount": 5000.00,
+                            "sender": "+221771234567",
+                            "receiver": "+221779876543",
+                            "timestamp": "2025-10-31T14:30:00Z",
+                            "description": "Transfert à Fatou",
+                            "status": "SUCCESS",
+                            "balance_histories": [
+                                {
+                                    "balance_before": 50000.00,
+                                    "balance_after": 45000.00,
+                                    "transaction_type": "DEBIT",
+                                    "timestamp": "2025-10-31T14:30:00Z",
+                                    "description": "Transfert à Fatou"
+                                }
+                            ]
+                        }
+                    ]
+                }
             )
-        ]
+        }
     )
     def get_queryset(self):
         user = self.request.user

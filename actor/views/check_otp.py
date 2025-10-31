@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny
 from services.otp import OTPService
 from actor.serializers import CheckOTPSerializer
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class CheckOTPView(APIView):
@@ -16,9 +17,27 @@ class CheckOTPView(APIView):
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(
-        request_body=CheckOTPSerializer,  # Ajoute cette ligne
+        operation_description="Vérifier le code OTP reçu par SMS",
+        request_body=CheckOTPSerializer,
+        responses={
+            200: openapi.Response(
+                description="OTP valide",
+                examples={
+                    "application/json": {
+                        "message": "OTP vérifié avec succès"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="OTP invalide ou expiré",
+                examples={
+                    "application/json": {
+                        "error": "OTP invalide ou expiré."
+                    }
+                }
+            )
+        }
     )
-
     def post(self, request, *args, **kwargs):
         # Sérialisation des données reçues
         serializer = CheckOTPSerializer(data=request.data)

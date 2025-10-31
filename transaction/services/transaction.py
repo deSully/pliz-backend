@@ -6,7 +6,10 @@ from transaction.models import Transaction, WalletBalanceHistory, TransactionSta
 
 import random
 import string
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class TransactionService:
@@ -25,9 +28,18 @@ class TransactionService:
         except WalletBalanceHistory.DoesNotExist:
             # Si aucun historique n'existe, le solde est considéré comme 0
             current_balance = 0.0
+            logger.warning(
+                f"No balance history found for wallet {sender_wallet.phone_number}. "
+                f"Current balance set to 0."
+            )
 
         # Vérifie si le solde est suffisant
         if current_balance < amount:
+            logger.warning(
+                f"INSUFFICIENT_FUNDS: Wallet {sender_wallet.phone_number} "
+                f"attempted transaction of {amount} {sender_wallet.currency} "
+                f"with balance {current_balance} {sender_wallet.currency}"
+            )
             raise ValidationError(
                 detail="Fonds insuffisants.", code="INSUFFICIENT_FUNDS_ERROR"
             )
@@ -99,7 +111,7 @@ class TransactionService:
         description=None,
         order_id=None,
     ):
-        return Transaction.objects.create(
+        transaction = Transaction.objects.create(
             sender=sender_wallet,
             receiver=receiver_wallet,
             amount=amount,
@@ -108,11 +120,29 @@ class TransactionService:
             description=description,
             order_id=order_id or TransactionService.generate_order_id(),
         )
+        
+        logger.info(
+            f"TRANSACTION_CREATED: {transaction.order_id} | "
+            f"Type: {transaction_type} | Amount: {amount} | "
+            f"From: {sender_wallet.phone_number if sender_wallet else 'N/A'} | "
+            f"To: {receiver_wallet.phone_number if receiver_wallet else 'N/A'}"
+        )
+        
+        return transaction
 
     @staticmethod
     def update_transaction_status(transaction, status):
+        old_status = transaction.status
         transaction.status = status.upper()
         transaction.save()
+        
+        logger.info(
+            f"TRANSACTION_STATUS_CHANGED: {transaction.order_id} | "
+            f"{old_status} -> {status.upper()} | "
+            f"Amount: {transaction.amount} | "
+            f"Type: {transaction.transaction_type}"
+        )
+        
         return transaction
 
     @staticmethod
