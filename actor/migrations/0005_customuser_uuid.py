@@ -4,13 +4,34 @@ import uuid
 from django.db import migrations, models
 
 
+def generate_unique_uuids(apps, schema_editor):
+    """Génère des UUIDs uniques pour tous les utilisateurs existants"""
+    CustomUser = apps.get_model('actor', 'CustomUser')
+    for user in CustomUser.objects.all():
+        user.uuid = uuid.uuid4()
+        user.save(update_fields=['uuid'])
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("actor", "0004_wallet_is_platform"),
     ]
 
     operations = [
+        # Étape 1: Ajouter le champ UUID sans contrainte unique (nullable temporairement)
         migrations.AddField(
+            model_name="customuser",
+            name="uuid",
+            field=models.UUIDField(
+                db_index=True, default=uuid.uuid4, editable=False, null=True
+            ),
+        ),
+        
+        # Étape 2: Générer des UUIDs uniques pour tous les utilisateurs existants
+        migrations.RunPython(generate_unique_uuids, migrations.RunPython.noop),
+        
+        # Étape 3: Rendre le champ non-nullable et unique
+        migrations.AlterField(
             model_name="customuser",
             name="uuid",
             field=models.UUIDField(
