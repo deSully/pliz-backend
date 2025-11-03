@@ -66,6 +66,12 @@ CustomUser = get_user_model()
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ("username", "email", "first_name", "last_name", "is_staff", "is_active")
-    search_fields = ("username", "email", "first_name", "last_name")
+    list_display = ("username", "email", "uuid", "first_name", "last_name", "is_staff", "is_active")
+    search_fields = ("username", "email", "first_name", "last_name", "uuid")
     list_filter = ("is_staff", "is_active", "is_superuser")
+    readonly_fields = ("uuid",)  # UUID en lecture seule dans le formulaire
+    
+    # Ajouter UUID dans les fieldsets pour qu'il apparaisse dans le détail
+    fieldsets = UserAdmin.fieldsets + (
+        ("Identifiant unique", {"fields": ("uuid",)}),
+    )
