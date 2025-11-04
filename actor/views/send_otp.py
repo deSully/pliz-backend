@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from services.otp import (
     OTPService,
 )
+from services.throttling import AuthRateThrottle
 from actor.serializers import SendOTPSerializer
 
 from drf_yasg.utils import swagger_auto_schema
@@ -20,7 +21,7 @@ class SendOTPView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = ['services.throttling.AuthRateThrottle']
+    throttle_classes = [AuthRateThrottle]
 
     @swagger_auto_schema(
         operation_description="Envoyer un code OTP par SMS pour vérification",
