@@ -62,10 +62,10 @@ class FeeService:
         if hasattr(user, "is_subscribed") and user.is_subscribed:
             return Decimal("0.00")
 
-        fee = FeeService.get_applicable_fee(
-            transaction_type, merchant=merchant, bank=bank
-        )
         amount = transaction.amount
+        fee = FeeService.get_applicable_fee(
+            transaction_type, amount, merchant=merchant, bank=bank
+        )
         fee_amount = FeeService.calculate_fee_amount(fee, amount)
 
         if fee_amount > 0:
