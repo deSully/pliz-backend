@@ -225,7 +225,7 @@ class MerchantInitiatedPaymentView(APIView):
                 logger.error(f"Unexpected error in merchant payment: {str(e)}")
                 return Response(
                     {
-                        "detail": "Une erreur est survenue lors du traitement du paiement.",
+                        "detail": f"Une erreur est survenue lors du traitement du paiement: {str(e)}",
                         "code": "PAYMENT_PROCESSING_ERROR"
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
