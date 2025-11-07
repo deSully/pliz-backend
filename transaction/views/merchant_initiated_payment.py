@@ -122,8 +122,8 @@ class MerchantInitiatedPaymentView(APIView):
                     
                     # Créer la transaction
                     transaction = TransactionService.create_pending_transaction(
-                        sender=customer_wallet,
-                        receiver=merchant_wallet,
+                        sender_wallet=customer_wallet,
+                        receiver_wallet=merchant_wallet,
                         transaction_type=TransactionType.PAYMENT.value,
                         amount=amount,
                         description=full_description
