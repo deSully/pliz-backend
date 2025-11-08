@@ -69,7 +69,7 @@ class MerchantPaymentView(APIView):
             details = serializer.validated_data["details"]
 
             try:
-                sender_wallet = Wallet.objects.get(user__username=sender)
+                sender_wallet = Wallet.objects.get(user=sender)
                 merchant = Merchant.objects.get(merchant_code=merchant_code)
 
                 response = MerchantPaymentService.process_payment(
@@ -115,15 +115,16 @@ class MerchantPaymentView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             except PaymentProcessingError as e:
+                logger.error(f"Payment processing error: {str(e)}")
                 return Response(
                     {"detail": str(e), "code": "PAYMENT_PROCESSING_ERROR"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             except Exception as e:
-                logger.error(f"Unexpected error: {str(e)}")
+                logger.error(f"Unexpected error in merchant payment: {str(e)}")
                 return Response(
                     {
-                        "detail": "Une erreur inattendue est survenue.",
+                        "detail": f"Une erreur inattendue est survenue: {str(e)}",
                         "code": "INTERNAL_SERVER_ERROR",
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
