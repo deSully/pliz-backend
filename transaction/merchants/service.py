@@ -20,6 +20,10 @@ class MerchantPaymentService:
         """
         Traite un paiement marchand. Le client est débité et le marchand crédité
         après validation du paiement via l'API spécifique au marchand.
+        
+        Supporte 2 cas:
+        - Services API (woyofal, rapido, airtime): Appel API externe
+        - Marchands Pliz (MCHxxxxx): Paiement direct
         """
         try:
             TransactionService.check_sufficient_funds(sender_wallet, amount)
@@ -42,23 +46,44 @@ class MerchantPaymentService:
                 f"Pending transaction created with ID {transaction.order_id} for merchant {merchant.merchant_code}"
             )
 
-            payment_processor = MerchantPaymentFactory.get_merchant_processor(
-                merchant.merchant_code
-            )
+            # Vérifier si c'est un service API (woyofal, rapido, airtime) ou un marchand Pliz
+            is_api_service = merchant.merchant_code.lower() in ["airtime", "woyofal", "rapido"]
+            
+            if is_api_service:
+                # Cas 1: Service API - Appel externe
+                logger.info(f"Processing API service payment for {merchant.merchant_code}")
+                payment_processor = MerchantPaymentFactory.get_merchant_processor(
+                    merchant.merchant_code
+                )
 
-            logger.info(
-                f"Using payment processor {payment_processor.__class__.__name__} for merchant {merchant.merchant_code}"
-            )
-            response = payment_processor.initiate_payment(transaction, details)
-            logger.info(
-                f"Payment processor response for transaction ID {transaction.order_id}: {response}"
-            )
-            status = response.get("data", {}).get("status")
-            if status not in ["success", "pending"]:
-                raise PaymentProcessingError(
-                    detail="Le traitement du rechargement a échoué.",
-                    code="PAYMENT_PROCESSING_ERROR",
-                ) 
+                logger.info(
+                    f"Using payment processor {payment_processor.__class__.__name__} for merchant {merchant.merchant_code}"
+                )
+                response = payment_processor.initiate_payment(transaction, details)
+                logger.info(
+                    f"Payment processor response for transaction ID {transaction.order_id}: {response}"
+                )
+                status = response.get("data", {}).get("status")
+                if status not in ["success", "pending"]:
+                    raise PaymentProcessingError(
+                        detail="Le traitement du paiement a échoué.",
+                        code="PAYMENT_PROCESSING_ERROR",
+                    )
+            else:
+                # Cas 2: Marchand Pliz - Paiement direct (pas d'API externe)
+                logger.info(f"Processing direct merchant payment for {merchant.merchant_code}")
+                response = {
+                    "status": "success",
+                    "data": {
+                        "status": "success",
+                        "order_id": transaction.order_id,
+                        "amount": float(amount),
+                        "merchant_code": merchant.merchant_code,
+                        "merchant_name": merchant.business_name
+                    }
+                }
+            
+            # Créditer le marchand et débiter le client
             TransactionService.credit_wallet(
                 merchant.wallet, amount, transaction, description
             )
@@ -82,6 +107,6 @@ class MerchantPaymentService:
 
         except PaymentProcessingError:
             raise PaymentProcessingError(
-                detail="Le traitement du rechargement a échoué.",
+                detail="Le traitement du paiement a échoué.",
                 code="PAYMENT_PROCESSING_ERROR",
             )
