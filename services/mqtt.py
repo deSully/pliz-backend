@@ -24,30 +24,40 @@ class MQTTService:
     def _initialize(self):
         """Initialise la connexion MQTT"""
         try:
-            self._client = mqtt.Client(client_id=f"pliz_backend_{os.getenv('HOSTNAME', 'local')}")
-            
-            # Configuration HiveMQ Cloud
-            broker = os.getenv('MQTT_BROKER', 'broker.hivemq.com')
+            # Vérifier que les credentials MQTT sont configurés
+            broker = os.getenv('MQTT_BROKER', '')
             port = int(os.getenv('MQTT_PORT', '1883'))
             username = os.getenv('MQTT_USERNAME', '')
             password = os.getenv('MQTT_PASSWORD', '')
             
-            if username and password:
-                self._client.username_pw_set(username, password)
+            if not broker or not username or not password:
+                logger.warning(
+                    "MQTT credentials not configured. "
+                    "Notifications will be disabled. "
+                    "Set MQTT_BROKER, MQTT_USERNAME, MQTT_PASSWORD env vars."
+                )
+                self._client = None
+                return
+            
+            self._client = mqtt.Client(client_id=f"pliz_backend_{os.getenv('HOSTNAME', 'local')}")
+            self._client.username_pw_set(username, password)
             
             # Callbacks
             self._client.on_connect = self._on_connect
             self._client.on_disconnect = self._on_disconnect
             self._client.on_publish = self._on_publish
             
-            # Connexion
+            # Connexion avec timeout
             self._client.connect(broker, port, keepalive=60)
             self._client.loop_start()
             
             logger.info(f"MQTT Service initialized - Broker: {broker}:{port}")
             
         except Exception as e:
-            logger.error(f"Failed to initialize MQTT: {e}")
+            logger.error(
+                f"Failed to initialize MQTT: {e}. "
+                f"Notifications will be disabled but transactions will continue."
+            )
             self._client = None
     
     def _on_connect(self, client, userdata, flags, rc):
@@ -87,10 +97,13 @@ class MQTTService:
             transaction_data: Données de la transaction (optionnel)
         
         Returns:
-            bool: True si la publication a réussi
+            bool: True si la publication a réussi, False sinon (graceful degradation)
         """
         if not self._client:
-            logger.warning("MQTT client not initialized. Skipping notification.")
+            logger.warning(
+                f"MQTT client not initialized. Skipping notification for {user_uuid}. "
+                f"Transaction processing will continue normally."
+            )
             return False
         
         try:
@@ -118,11 +131,17 @@ class MQTTService:
                 logger.info(f"Transaction notification sent to {user_uuid}: {action} - {status}")
                 return True
             else:
-                logger.error(f"Failed to publish notification. RC: {result.rc}")
+                logger.warning(
+                    f"Failed to publish notification to {user_uuid}. RC: {result.rc}. "
+                    f"Transaction continues normally."
+                )
                 return False
                 
         except Exception as e:
-            logger.error(f"Error publishing notification: {e}")
+            logger.error(
+                f"Error publishing notification to {user_uuid}: {e}. "
+                f"Transaction continues normally (graceful degradation)."
+            )
             return False
     
     def publish_system_notification(
@@ -142,10 +161,12 @@ class MQTTService:
             data: Données additionnelles (optionnel)
         
         Returns:
-            bool: True si la publication a réussi
+            bool: True si la publication a réussi, False sinon (graceful degradation)
         """
         if not self._client:
-            logger.warning("MQTT client not initialized. Skipping notification.")
+            logger.warning(
+                f"MQTT client not initialized. Skipping system notification for {user_uuid}."
+            )
             return False
         
         try:
@@ -169,11 +190,15 @@ class MQTTService:
                 logger.info(f"System notification sent to {user_uuid}")
                 return True
             else:
-                logger.error(f"Failed to publish notification. RC: {result.rc}")
+                logger.warning(
+                    f"Failed to publish system notification to {user_uuid}. RC: {result.rc}"
+                )
                 return False
                 
         except Exception as e:
-            logger.error(f"Error publishing notification: {e}")
+            logger.error(
+                f"Error publishing system notification to {user_uuid}: {e}"
+            )
             return False
     
 
