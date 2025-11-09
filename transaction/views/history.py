@@ -45,5 +45,11 @@ class TransactionHistoryView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         wallet = Wallet.objects.get(user=user)
-        transactions = Transaction.objects.filter(sender=wallet) | Transaction.objects.filter(receiver=wallet)
+        
+        # Utiliser Q objects pour une requête unique et sécurisée
+        from django.db.models import Q
+        transactions = Transaction.objects.filter(
+            Q(sender=wallet) | Q(receiver=wallet)
+        ).distinct()
+        
         return transactions.order_by('-timestamp')
