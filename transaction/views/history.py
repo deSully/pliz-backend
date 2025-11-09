@@ -20,10 +20,23 @@ class TransactionHistoryView(generics.ListAPIView):
                     "application/json": [
                         {
                             "id": 1,
+                            "order_id": "TRF-20251109-ABC123",
                             "transaction_type": "TRANSFER",
                             "amount": 5000.00,
-                            "sender": "+221771234567",
-                            "receiver": "+221779876543",
+                            "sender": {
+                                "wallet_id": 42,
+                                "phone_number": "+221771234567",
+                                "user_id": 2,
+                                "name": "Mamadou Diallo"
+                            },
+                            "receiver": {
+                                "wallet_id": 87,
+                                "phone_number": "+221779876543",
+                                "user_id": 5,
+                                "name": "Fatou Sow",
+                                "merchant_code": "MCHEC00D910",
+                                "business_name": "Boutique Fatou"
+                            },
                             "timestamp": "2025-10-31T14:30:00Z",
                             "description": "Transfert à Fatou",
                             "status": "SUCCESS",

@@ -208,11 +208,14 @@ class WalletBalanceHistorySerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     balance_histories = WalletBalanceHistorySerializer(many=True, read_only=True)
+    sender = serializers.SerializerMethodField()
+    receiver = serializers.SerializerMethodField()
 
     class Meta:
         model = Transaction
         fields = [
             "id",
+            "order_id",
             "transaction_type",
             "amount",
             "sender",
@@ -222,6 +225,60 @@ class TransactionSerializer(serializers.ModelSerializer):
             "status",
             "balance_histories",
         ]
+    
+    def get_sender(self, obj):
+        """Retourne les détails complets du sender"""
+        if not obj.sender:
+            return None
+        
+        wallet = obj.sender
+        result = {
+            "wallet_id": wallet.id,
+            "phone_number": wallet.phone_number,
+        }
+        
+        if wallet.user:
+            result["user_id"] = wallet.user.id
+            result["name"] = f"{wallet.user.first_name} {wallet.user.last_name}".strip()
+            
+            # Si marchand, ajouter les infos
+            if wallet.user.user_type == "merchant":
+                try:
+                    from actor.models import Merchant
+                    merchant = Merchant.objects.get(wallet=wallet)
+                    result["merchant_code"] = merchant.merchant_code
+                    result["business_name"] = merchant.business_name
+                except Merchant.DoesNotExist:
+                    pass
+        
+        return result
+    
+    def get_receiver(self, obj):
+        """Retourne les détails complets du receiver"""
+        if not obj.receiver:
+            return None
+        
+        wallet = obj.receiver
+        result = {
+            "wallet_id": wallet.id,
+            "phone_number": wallet.phone_number,
+        }
+        
+        if wallet.user:
+            result["user_id"] = wallet.user.id
+            result["name"] = f"{wallet.user.first_name} {wallet.user.last_name}".strip()
+            
+            # Si marchand, ajouter les infos
+            if wallet.user.user_type == "merchant":
+                try:
+                    from actor.models import Merchant
+                    merchant = Merchant.objects.get(wallet=wallet)
+                    result["merchant_code"] = merchant.merchant_code
+                    result["business_name"] = merchant.business_name
+                except Merchant.DoesNotExist:
+                    pass
+        
+        return result
 
 
 class TopUpSerializer(serializers.Serializer):
