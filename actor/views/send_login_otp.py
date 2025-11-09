@@ -43,9 +43,7 @@ class SendLoginOTPView(APIView):
 
             # Générer l'OTP et l'envoyer par SMS
             otp = OTPService.generate_otp()
-
-            print(f"OTP généré pour {phone_number}: {otp}")
-            logger.info(f"OTP généré pour {phone_number}: {otp}")
+            logger.info(f"OTP généré pour {phone_number}")
 
             # Vérifier si l'envoi d'OTP est activé
             otp_sending_enabled = os.getenv(
@@ -54,10 +52,15 @@ class SendLoginOTPView(APIView):
 
             if otp_sending_enabled:
                 OTPService.send_otp_by_sms(phone_number, otp)
-
-            return Response(
-                {"message": f"OTP envoyé avec succès. Vérifiez votre SMS - {otp}"},
-                status=status.HTTP_200_OK,
-            )
+                return Response(
+                    {"message": "OTP envoyé avec succès. Vérifiez votre SMS"},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                # Mode dev/test : retourner l'OTP dans la réponse (SMS désactivé)
+                return Response(
+                    {"message": f"Mode test - OTP: {otp} (SMS non envoyé)"},
+                    status=status.HTTP_200_OK,
+                )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
