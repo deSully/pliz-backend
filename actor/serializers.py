@@ -235,9 +235,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_wallet(self, obj):
         try:
             wallet = obj.wallet
+            
+            # Récupérer le solde actuel depuis WalletBalanceHistory
+            from transaction.models import WalletBalanceHistory
+            try:
+                last_balance = WalletBalanceHistory.objects.filter(
+                    wallet=wallet
+                ).latest('timestamp')
+                balance = float(last_balance.balance_after)
+            except WalletBalanceHistory.DoesNotExist:
+                balance = 0.0
+            
             return {
+                "id": wallet.id,  # ⭐ IMPORTANT: wallet_id pour les transactions
                 "phone_number": wallet.phone_number,
-                "currency": wallet.currency
+                "currency": wallet.currency,
+                "balance": balance,
+                "is_platform": wallet.is_platform
             }
         except Exception:
             return None

@@ -23,20 +23,25 @@ class UserProfileView(APIView):
                 examples={
                     "application/json": {
                         "id": 1,
+                        "uuid": "550e8400-e29b-41d4-a716-446655440000",
+                        "username": "+221771234567",
                         "phone_number": "+221771234567",
                         "first_name": "Mamadou",
                         "last_name": "Diallo",
                         "email": "mamadou@example.com",
                         "user_type": "merchant",
                         "is_subscribed": False,
+                        "wallet": {
+                            "id": 42,
+                            "phone_number": "+221771234567",
+                            "currency": "XOF",
+                            "balance": 125000.00,
+                            "is_platform": False
+                        },
                         "merchant": {
                             "merchant_code": "MCH12345678",
                             "business_name": "Boutique Diallo",
                             "address": "Dakar, Senegal"
-                        },
-                        "wallet": {
-                            "phone_number": "+221771234567",
-                            "currency": "XOF"
                         }
                     }
                 }
