@@ -75,11 +75,10 @@ class MerchantPaymentService:
                 response = {
                     "status": "success",
                     "data": {
-                        "status": "success",
                         "order_id": transaction.order_id,
                         "amount": float(amount),
                         "merchant_code": merchant.merchant_code,
-                        "merchant_name": merchant.business_name
+                        "merchant_name": merchant.business_name  # Info bonus utile
                     }
                 }
             
