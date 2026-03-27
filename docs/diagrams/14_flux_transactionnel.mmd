@@ -1,0 +1,49 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+graph TD
+    Internet(["🌍 Internet\nUtilisateurs · Partenaires"])
+    R53["Route 53\nDNS + Health Check Failover"]
+    WAF["AWS WAF + Shield Advanced\nOWASP Rules · DDoS Protection"]
+    ALB["Application Load Balancer\nTLS 1.3 · Multi-AZ"]
+
+    subgraph VPC["VPC — Réseau Privé AWS"]
+        ECS_A["ECS Fargate\nDjango — Zone A"]
+        ECS_B["ECS Fargate\nDjango — Zone B"]
+        ECS_C["ECS Fargate\nDjango — Zone C"]
+    end
+
+    subgraph Data["Couche Données"]
+        RDS[("RDS PostgreSQL 16\nPrimary Multi-AZ")]
+        REPLICA[("RDS\nRead Replica")]
+        REDIS[("ElastiCache\nRedis")]
+        S3[("S3\nLogs · Backups · KYC")]
+    end
+
+    subgraph SecLayer["Sécurité & Secrets"]
+        KMS["AWS KMS — CMK"]
+        SM["Secrets Manager"]
+    end
+
+    subgraph Obs["Observabilité"]
+        CW["CloudWatch"]
+        CT["CloudTrail — 7 ans"]
+    end
+
+    Internet --> R53 --> WAF --> ALB
+    ALB --> ECS_A & ECS_B & ECS_C
+    ECS_A & ECS_B & ECS_C --> RDS & REDIS & S3
+    RDS --> REPLICA
+    KMS --> RDS & S3 & SM
+    CW & CT --> S3

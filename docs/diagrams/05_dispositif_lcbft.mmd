@@ -1,0 +1,39 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+flowchart LR
+    T["Transaction\ninitée"] --> D1
+
+    subgraph Detection["Détection"]
+        D1["Seuillage\n> 1 000 000 XOF"]
+        D2["Anti-fractionnement\nN transactions / T min"]
+        D3["Analyse\npatterns ML"]
+    end
+
+    subgraph Blocage["Blocage Préventif"]
+        B1["Rate limiting\n50 trans/min"]
+        B2["Plafonds KYC\nN1 / N2"]
+        B3["Blacklists\ninternes"]
+    end
+
+    subgraph Reporting["Reporting Réglementaire"]
+        R1["Déclarations\nde Soupçon DS"]
+        R2["Export CENTIF"]
+        R3["Rapports BECEAO\nmensuels / trimestriels"]
+    end
+
+    D1 & D2 & D3 --> Blocage
+    Blocage --> OK["Transaction\nautorisée"]
+    Blocage --> Flag["Flaggée —\nRévision MLRO"]
+    Flag --> Reporting

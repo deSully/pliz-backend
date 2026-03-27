@@ -1,5 +1,6 @@
 from django.urls import path
 from actor.views.check_otp import CheckOTPView
+from actor.views.fcm_token import RegisterFCMTokenView
 from actor.views.login import LoginView
 from actor.views.rib import RIBListCreateView, RIBDeleteView
 from actor.views.send_otp import SendOTPView
@@ -23,4 +24,7 @@ urlpatterns = [
     path("ribs/<uuid:str>/delete/", RIBDeleteView.as_view(), name="rib-delete"),
 
     path("toggle-subscription/", ToggleSubscriptionView.as_view(), name="toggle-subscription"),
+
+    # Notifications FCM
+    path("fcm-token/", RegisterFCMTokenView.as_view(), name="register-fcm-token"),
 ]

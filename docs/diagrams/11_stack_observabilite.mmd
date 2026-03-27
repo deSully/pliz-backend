@@ -1,0 +1,41 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+graph TD
+    APP["Application Django\nECS Fargate"]
+
+    subgraph Metrics["Métriques"]
+        CW["CloudWatch Metrics\nCPU · RAM · Latence · TPS"]
+        CM["Custom Metrics\nvolume transactions · taux erreur"]
+    end
+
+    subgraph Logs["Journaux"]
+        TL["transactions.log\nINFO — toutes les transactions"]
+        EL["errors.log\nERROR — incidents critiques"]
+        CT["CloudTrail\nActions AWS — 7 ans"]
+    end
+
+    subgraph Traces["Traces"]
+        XR["AWS X-Ray\nTraçage distribué end-to-end"]
+    end
+
+    subgraph Alerts["Alertes"]
+        SNS["SNS\nSMS + Email on-call"]
+    end
+
+    APP --> CW & CM
+    APP --> TL & EL
+    APP --> XR
+    CW --> SNS
+    CT --> S3[("S3 Audit\nImmuable")]

@@ -1,5 +1,4 @@
 import pyotp
-import requests
 from django.core.mail import send_mail
 from django.conf import settings
 import os
@@ -46,46 +45,43 @@ class OTPService:
     @staticmethod
     def send_otp_by_sms(user_phone_number: str, otp: str) -> dict:
         """
-        Envoie un code OTP par SMS à l'utilisateur via l'API SMPP (https://sms-api.smpp.app).
+        Envoie un code OTP par SMS via Twilio.
 
         Args:
-            user_phone_number (str): Numéro de téléphone du destinataire (au format international).
+            user_phone_number (str): Numéro de téléphone du destinataire (format international, ex: +221771234567).
             otp (str): Code OTP à envoyer.
 
         Returns:
-            dict: Réponse JSON de l'API.
+            dict: Informations sur le message envoyé (sid, status).
 
         Raises:
-            Exception: Si une erreur survient lors de l'appel API.
+            Exception: Si les credentials Twilio sont manquants ou si l'envoi échoue.
         """
+        from twilio.rest import Client
+        from twilio.base.exceptions import TwilioRestException
 
-        # Configuration
-        sms_api_url = "https://sms-api.smpp.app/v1/send-sms"
-        sms_api_token = os.getenv("SMPP_API_TOKEN")  # À définir dans l'environnement
-        sms_sender_id = os.getenv("SMPP_SENDER_ID", "MyApp")  # Nom de l'expéditeur
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        from_number = os.getenv("TWILIO_PHONE_NUMBER")
 
-        if not sms_api_token:
-            raise Exception("Le token SMPP_API_TOKEN est manquant dans les variables d'environnement.")
+        if not account_sid or not auth_token or not from_number:
+            raise Exception(
+                "Les variables Twilio sont manquantes : "
+                "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER."
+            )
 
-        # Préparation de la requête
-        headers = {
-            "Authorization": f"Bearer {sms_api_token}",
-            "Content-Type": "application/json",
-        }
+        try:
+            client = Client(account_sid, auth_token)
+            message = client.messages.create(
+                body=f"Votre code OTP est : {otp}",
+                from_=from_number,
+                to=user_phone_number,
+            )
+            logger.info(f"SMS OTP sent via Twilio to {user_phone_number} (sid={message.sid})")
+            return {"sid": message.sid, "status": message.status}
 
-        payload = {
-            "to": user_phone_number,
-            "sender_id": sms_sender_id,
-            "message": f"Votre code OTP est : {otp}"
-        }
-
-        # Envoi de la requête
-        response = requests.post(sms_api_url, json=payload, headers=headers)
-
-        if response.status_code != 200:
-            raise Exception(f"Échec de l'envoi du SMS : {response.status_code} - {response.text}")
-
-        return response.json()
+        except TwilioRestException as e:
+            raise Exception(f"Échec de l'envoi du SMS via Twilio : {e}")
     @staticmethod
     def send_otp_by_email(user, otp):
         """

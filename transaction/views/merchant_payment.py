@@ -8,7 +8,7 @@ from transaction.errors import PaymentProcessingError
 from transaction.serializers import MerchantPaymentSerializer
 from transaction.merchants.service import MerchantPaymentService
 from services.throttling import TransactionRateThrottle
-from services.mqtt import mqtt_service
+from services.firebase import firebase_service
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -76,20 +76,18 @@ class MerchantPaymentView(APIView):
                     merchant, sender_wallet, amount, details
                 )
                 
-                # Notification MQTT pour paiement API marchand
-                if hasattr(sender, 'uuid'):
-                    mqtt_service.publish_transaction_notification(
-                        user_uuid=str(sender.uuid),
-                        action="payment",
-                        status="success",
-                        title="🏪 Paiement marchand",
-                        message=f"Paiement de {amount} FCFA via {merchant_code}",
-                        transaction_data={
-                            "merchant_code": merchant_code,
-                            "amount": float(amount),
-                            "details": details
-                        }
-                    )
+                # Notification FCM - paiement marchand
+                firebase_service.send_transaction_notification(
+                    fcm_token=getattr(sender, "fcm_token", None),
+                    action="payment",
+                    status="success",
+                    title="Paiement marchand",
+                    message=f"Paiement de {amount} FCFA via {merchant_code}",
+                    transaction_data={
+                        "merchant_code": merchant_code,
+                        "amount": float(amount),
+                    },
+                )
 
                 return Response(response, status=status.HTTP_200_OK)
 

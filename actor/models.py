@@ -11,6 +11,7 @@ class CustomUser(AbstractUser):
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default="user")
     is_subscribed = models.BooleanField(default=False)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    fcm_token = models.CharField(max_length=512, blank=True, null=True)
 
 
 class Wallet(models.Model):

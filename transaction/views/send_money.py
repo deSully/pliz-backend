@@ -5,7 +5,7 @@ from rest_framework import status
 
 from transaction.serializers import SendMoneySerializer
 from services.throttling import TransactionRateThrottle
-from services.mqtt import mqtt_service
+from services.firebase import firebase_service
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -79,19 +79,32 @@ class SendMoneyView(APIView):
                     f"Transaction successful: {order_id}, Amount: {amount}, New Balance: {new_balance}"
                 )
                 
-                # Notification MQTT initiation
-                if hasattr(request.user, 'uuid'):
-                    mqtt_service.publish_transaction_notification(
-                        user_uuid=str(request.user.uuid),
-                        action="send_money",
-                        status="pending",
-                        title="💸 Envoi en cours",
-                        message=f"Votre envoi de {amount} FCFA est en cours de traitement",
+                # Notification FCM - sender
+                firebase_service.send_transaction_notification(
+                    fcm_token=getattr(request.user, "fcm_token", None),
+                    action="send_money",
+                    status="success",
+                    title="Envoi en cours",
+                    message=f"Votre envoi de {amount} FCFA est en cours de traitement",
+                    transaction_data={
+                        "transaction_id": order_id,
+                        "amount": float(amount),
+                        "receiver": transaction.receiver.phone_number if transaction.receiver else "N/A",
+                    },
+                )
+                # Notification FCM - receiver (argent reçu)
+                if transaction.receiver and transaction.receiver.user:
+                    firebase_service.send_transaction_notification(
+                        fcm_token=getattr(transaction.receiver.user, "fcm_token", None),
+                        action="receive_money",
+                        status="success",
+                        title="Argent reçu",
+                        message=f"Vous avez reçu {amount} FCFA",
                         transaction_data={
                             "transaction_id": order_id,
                             "amount": float(amount),
-                            "receiver": transaction.receiver.phone_number if transaction.receiver else "N/A"
-                        }
+                            "sender": transaction.sender.phone_number if transaction.sender else "N/A",
+                        },
                     )
 
                 return Response(

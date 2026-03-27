@@ -1,0 +1,37 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+sequenceDiagram
+    participant U as Utilisateur
+    participant ALB as Load Balancer
+    participant API as Django API
+    participant DB as PostgreSQL
+    participant MQTT as HiveMQ MQTT
+
+    U->>ALB: POST /api/transaction/send-money/ (JWT Bearer)
+    ALB->>API: Forward — HTTPS TLS 1.3
+    API->>API: Validation JWT · Rate limit · Resolve destinataire
+    API->>DB: Vérification solde (WalletBalanceHistory)
+    DB-->>API: Solde suffisant ✓
+    API->>DB: BEGIN TRANSACTION SERIALIZABLE
+    API->>DB: INSERT Transaction (status=PENDING)
+    API->>DB: DEBIT wallet expéditeur + INSERT History
+    API->>DB: CREDIT wallet destinataire + INSERT History
+    API->>DB: DEBIT frais → wallet PLIIIZ + INSERT FeeDistribution
+    API->>DB: UPDATE Transaction (status=SUCCESS)
+    API->>DB: COMMIT
+    DB-->>API: OK ✓
+    API->>MQTT: Publish notification expéditeur
+    API->>MQTT: Publish notification destinataire
+    API-->>U: 200 OK · order_id · status: success

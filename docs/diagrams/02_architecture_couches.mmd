@@ -1,0 +1,33 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+graph TD
+    A["📱 Applications Mobiles / Web\n(hors périmètre)"]
+    B["🔌 Couche API — Django REST Framework\n/api/actor/  ·  /api/transaction/  ·  /api/health/"]
+    C1["⚙️ TransactionService\ndebit · credit · status"]
+    C2["💰 FeeService\ncalcul · application · distribution"]
+    C3["🔗 PartnerGatewayFactory\nDjamo · SamirPay · MTN · Ecobank"]
+    D1["🗄️ PostgreSQL RDS\nDonnées financières"]
+    D2["📡 HiveMQ MQTT\nNotifications temps réel"]
+    D3["📊 CloudWatch / S3\nLogs · Monitoring"]
+
+    A -->|"HTTPS — REST"| B
+    B --> C1
+    B --> C2
+    B --> C3
+    C1 --> D1
+    C2 --> D1
+    C3 --> D1
+    C1 --> D2
+    D1 --> D3

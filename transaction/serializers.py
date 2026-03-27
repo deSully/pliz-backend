@@ -218,6 +218,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             "order_id",
             "transaction_type",
             "amount",
+            "fee_applied",
             "sender",
             "receiver",
             "timestamp",

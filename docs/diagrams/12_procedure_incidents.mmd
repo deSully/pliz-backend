@@ -1,0 +1,32 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+flowchart TD
+    INC(["Incident détecté\nCloudWatch · WAF · Signalement"]) --> CLASS{"Classification\nde la criticité"}
+
+    CLASS --> P1["P1 — CRITIQUE\nvol de données\nindisponibilité > 1h"]
+    CLASS --> P2["P2 — MAJEUR\nanomalie transaction\nerreur système"]
+    CLASS --> P3["P3 — MINEUR\nlatence · tentatives login"]
+
+    P1 --> A1["Escalade CISO + CTO + CEO\n≤ 15 minutes"]
+    A1 --> A2["Notification BECEAO\n≤ 24 heures"]
+    A2 --> A3["Notification utilisateurs\n≤ 72 heures si données compromises"]
+    A3 --> A4["Post-mortem\n≤ 5 jours ouvrés"]
+
+    P2 --> B1["Escalade équipe tech + CISO"]
+    B1 --> B2["Résolution ≤ 4 heures"]
+    B2 --> B3["Rapport incident ≤ 48 heures"]
+
+    P3 --> C1["Traitement équipe on-call"]
+    C1 --> C2["Documentation ticket système"]

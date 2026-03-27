@@ -1,0 +1,43 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+graph TD
+    Internet(["🌍 Internet"])
+    R53["Route 53\nDNS + Failover"]
+    WAF["AWS WAF\n+ Shield Advanced"]
+    ALB["Application Load Balancer\nMulti-AZ · TLS 1.3"]
+
+    ECS_A["ECS Fargate\nZone A"]
+    ECS_B["ECS Fargate\nZone B"]
+    ECS_C["ECS Fargate\nZone C"]
+
+    RDS[("RDS PostgreSQL 16\nPrimary — Multi-AZ")]
+    REPLICA[("RDS Read\nReplica")]
+    REDIS[("ElastiCache\nRedis")]
+    S3[("S3\nLogs · Backups")]
+
+    KMS["AWS KMS\nCMK"]
+    SM["Secrets Manager\nAPI Keys"]
+    CW["CloudWatch\nMonitoring"]
+    CT["CloudTrail\nAudit 7 ans"]
+
+    Internet --> R53 --> WAF --> ALB
+    ALB --> ECS_A & ECS_B & ECS_C
+    ECS_A & ECS_B & ECS_C --> RDS
+    ECS_A & ECS_B & ECS_C --> REDIS
+    ECS_A & ECS_B & ECS_C --> S3
+    RDS --> REPLICA
+    KMS --> RDS & S3 & SM
+    CW --> S3
+    CT --> S3

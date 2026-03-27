@@ -1,0 +1,21 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor':        '#1a3a5c',
+    'primaryTextColor':    '#ffffff',
+    'primaryBorderColor':  '#e8a020',
+    'lineColor':           '#e8a020',
+    'secondaryColor':      '#0d2137',
+    'tertiaryColor':       '#f0f7ff',
+    'edgeLabelBackground': '#ffffff',
+    'fontFamily':          'Segoe UI, Helvetica Neue, Arial, sans-serif',
+    'fontSize':            '14px'
+  }
+}}%%
+graph LR
+    N1["Niveau 1\nApplicatif\nAuto Scaling + ALB\nhealth checks"]
+    N2["Niveau 2\nBase de données\nRDS Multi-AZ\nRead Replicas"]
+    N3["Niveau 3\nInfrastructure\nMulti-AZ AWS\n3 zones de dispo."]
+    N4["Niveau 4\nDisaster Recovery\nRégion AWS secondaire\ncross-region replication"]
+
+    N1 --> N2 --> N3 --> N4
