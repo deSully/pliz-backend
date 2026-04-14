@@ -56,12 +56,8 @@ MTN_API_SECRET=votre_secret
 FF_OTP_SENDING_ENABLED=True  # Mettre True en prod
 OTP_SECRET_KEY=GÉNÉRER_UNE_CLÉ_ALÉATOIRE
 
-# MQTT / HiveMQ Cloud (Notifications temps réel)
-MQTT_BROKER=c5f0da6ec4494a8ab443d2a73b2d3d47.s1.eu.hivemq.cloud
-MQTT_PORT=8883
-MQTT_USERNAME=votre_username_hivemq
-MQTT_PASSWORD=votre_password_hivemq
-MQTT_USE_TLS=True
+# Firebase Cloud Messaging (Push Notifications)
+FIREBASE_CREDENTIALS_FILE=/path/to/firebase-service-account.json
 
 # CORS (URLs Frontend autorisées)
 CORS_ALLOWED_ORIGINS=https://app.plizmoney.com,https://admin.plizmoney.com

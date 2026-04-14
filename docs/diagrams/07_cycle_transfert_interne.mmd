@@ -26,5 +26,5 @@ flowchart TD
     K -- Oui --> L(["200 ACK — idempotent"])
     K -- Non --> M["CREDIT wallet utilisateur\n+ INSERT WalletBalanceHistory"]
     M --> N["UPDATE Transaction\nstatus = SUCCESS"]
-    N --> O["MQTT notify\nstatus temps réel"]
+    N --> O["FCM push notify\nstatus temps réel"]
     O --> L

@@ -3,7 +3,7 @@ from decimal import Decimal
 from rest_framework.exceptions import ValidationError
 
 from transaction.models import Transaction, WalletBalanceHistory, TransactionStatus
-from services.mqtt import mqtt_service
+from services.firebase import firebase_service
 
 import random
 import string
@@ -144,24 +144,24 @@ class TransactionService:
             f"Type: {transaction.transaction_type}"
         )
         
-        # Envoi des notifications MQTT selon le statut
+        # Envoi des notifications push via Firebase FCM
         TransactionService._send_status_notifications(transaction, status)
         
         return transaction
     
     @staticmethod
     def _send_status_notifications(transaction, status):
-        """Envoie les notifications MQTT aux utilisateurs concernés"""
+        """Envoie les notifications push via Firebase FCM aux utilisateurs concernés"""
         status_upper = status.upper()
         
         # Notification pour le sender
         if transaction.sender and hasattr(transaction.sender.user, 'uuid'):
-            sender_uuid = str(transaction.sender.user.uuid)
+            sender_fcm_token = getattr(transaction.sender.user, 'fcm_token', None)
             
             if status_upper == TransactionStatus.SUCCESS.value:
                 if transaction.transaction_type == "TOPUP":
-                    mqtt_service.publish_transaction_notification(
-                        user_uuid=sender_uuid,
+                    firebase_service.send_transaction_notification(
+                        fcm_token=sender_fcm_token,
                         action="topup",
                         status="success",
                         title="✅ Recharge réussie",
@@ -172,8 +172,8 @@ class TransactionService:
                         }
                     )
                 else:
-                    mqtt_service.publish_transaction_notification(
-                        user_uuid=sender_uuid,
+                    firebase_service.send_transaction_notification(
+                        fcm_token=sender_fcm_token,
                         action="send_money",
                         status="success",
                         title="✅ Envoi réussi",
@@ -187,8 +187,8 @@ class TransactionService:
             
             elif status_upper == TransactionStatus.FAILED.value:
                 action = "topup" if transaction.transaction_type == "TOPUP" else "send_money"
-                mqtt_service.publish_transaction_notification(
-                    user_uuid=sender_uuid,
+                firebase_service.send_transaction_notification(
+                    fcm_token=sender_fcm_token,
                     action=action,
                     status="failed",
                     title="❌ Transaction échouée",
@@ -201,12 +201,12 @@ class TransactionService:
         
         # Notification pour le receiver
         if transaction.receiver and hasattr(transaction.receiver.user, 'uuid') and status_upper == TransactionStatus.SUCCESS.value:
-            receiver_uuid = str(transaction.receiver.user.uuid)
+            receiver_fcm_token = getattr(transaction.receiver.user, 'fcm_token', None)
             
             if transaction.transaction_type == "PAYMENT":
                 # Notification marchand
-                mqtt_service.publish_transaction_notification(
-                    user_uuid=receiver_uuid,
+                firebase_service.send_transaction_notification(
+                    fcm_token=receiver_fcm_token,
                     action="payment",
                     status="success",
                     title="🏪 Paiement reçu",
@@ -219,8 +219,8 @@ class TransactionService:
                 )
             else:
                 # Notification utilisateur normal
-                mqtt_service.publish_transaction_notification(
-                    user_uuid=receiver_uuid,
+                firebase_service.send_transaction_notification(
+                    fcm_token=receiver_fcm_token,
                     action="receive_money",
                     status="success",
                     title="💰 Argent reçu",

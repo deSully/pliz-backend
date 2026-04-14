@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def health_check(request):
     """
     Health check endpoint pour monitoring
-    Vérifie : Database, MQTT, Environment
+    Vérifie : Database, Firebase FCM, Environment
     """
     health_status = {
         "status": "healthy",
@@ -38,25 +38,25 @@ def health_check(request):
         }
         logger.error(f"Health check - Database failed: {e}")
 
-    # Vérifier MQTT
+    # Vérifier Firebase FCM
     try:
-        from services.mqtt import mqtt_service
-        if mqtt_service._client:
-            health_status["checks"]["mqtt"] = {
+        from services.firebase import firebase_service
+        if firebase_service._app:
+            health_status["checks"]["firebase"] = {
                 "status": "healthy",
-                "message": "MQTT client initialized"
+                "message": "Firebase FCM initialized"
             }
         else:
-            health_status["checks"]["mqtt"] = {
+            health_status["checks"]["firebase"] = {
                 "status": "degraded",
-                "message": "MQTT client not initialized (graceful degradation active)"
+                "message": "Firebase not initialized (push notifications disabled)"
             }
     except Exception as e:
-        health_status["checks"]["mqtt"] = {
+        health_status["checks"]["firebase"] = {
             "status": "degraded",
-            "message": f"MQTT check failed: {str(e)}"
+            "message": f"Firebase check failed: {str(e)}"
         }
-        logger.warning(f"Health check - MQTT check failed: {e}")
+        logger.warning(f"Health check - Firebase check failed: {e}")
 
     # Vérifier l'environnement
     health_status["environment"] = "production" if not os.getenv("DEBUG", "True") == "True" else "development"
@@ -66,6 +66,4 @@ def health_check(request):
         health_status["status"] = "unhealthy"
         return JsonResponse(health_status, status=503)
     
-    return JsonResponse(health_status)
-
     return JsonResponse(health_status, status=200)

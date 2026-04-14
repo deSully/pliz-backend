@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class FirebaseService:
     """
     Service pour envoyer des notifications push via Firebase Cloud Messaging (FCM).
-    Remplace MQTT/HiveMQ pour les notifications en temps réel.
+    Service pour les notifications push en temps réel.
     """
 
     _instance = None

@@ -13,4 +13,3 @@ ruff
 pyotp
 twilio
 firebase-admin
-paho-mqtt

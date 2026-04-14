@@ -257,7 +257,7 @@ Préparé par la Direction Technique PLIIIZ · technique@plizmoney.com
 | Authentification | **SimpleJWT** | JWT RS256/HS256, rotation activée |
 | Documentation API | **drf-yasg** (OpenAPI 3.0) | Swagger auto-généré |
 | Clients HTTP asynchrones | **httpx** | Appels non-bloquants partenaires |
-| Messaging temps réel | **paho-mqtt** | MQTT TLS — standard Fintech |
+| Notifications push | **firebase-admin** | Firebase Cloud Messaging (FCM) |
 | OTP | **pyotp** (TOTP RFC 6238) | Standard IETF — auth forte |
 | SMS / OTP | **Twilio SMPP** | Routage SMS international certifié |
 | Base de données | **PostgreSQL 16** | ACID, performant, enterprise |
@@ -361,7 +361,7 @@ Préparé par la Direction Technique PLIIIZ · technique@plizmoney.com
 | Contexte | Algorithme | Implémentation |
 |----------|-----------|----------------|
 | Transport API | **TLS 1.3** | AWS ACM + Nginx |
-| Transport MQTT | **TLS 1.2+** port 8883 | HiveMQ Cloud |
+| Transport FCM | **HTTPS** | Firebase Cloud Messaging |
 | Données au repos — DB | **AES-256** | AWS RDS Encryption |
 | Données au repos — S3 | **AES-256** | SSE-KMS |
 | Clés API partenaires | **AES-256** | AWS Secrets Manager |
@@ -548,7 +548,7 @@ Préparé par la Direction Technique PLIIIZ · technique@plizmoney.com
 
 # 08
 # Interopérabilité & Partenaires
-## Factory Pattern · Webhooks · MQTT · Passerelles
+## Factory Pattern · Webhooks · FCM · Passerelles
 
 ---
 
@@ -571,17 +571,17 @@ Préparé par la Direction Technique PLIIIZ · technique@plizmoney.com
 
 ---
 
-# 8.3 Notifications Temps Réel — MQTT
+# 8.3 Notifications Push — Firebase Cloud Messaging
 
 | Paramètre | Valeur |
 |-----------|--------|
-| Broker | HiveMQ Cloud |
-| Port | **8883** (MQTTS — TLS obligatoire) |
-| Pattern de topic | `pliz/{user_uuid}/notifications` |
-| QoS | Level 1 — At least once |
-| Authentification | Username + Password |
+| Service | Firebase Cloud Messaging (FCM) |
+| Transport | **HTTPS** (API v1) |
+| Ciblage | Token FCM par appareil |
+| Priorité | High (Android) / default (APNs) |
+| Authentification | Service Account (JSON credentials) |
 | Chiffrement | TLS 1.2+ |
-| Résilience | Dégradation gracieuse — transactions non bloquées si MQTT indisponible |
+| Résilience | Dégradation gracieuse — transactions non bloquées si FCM indisponible |
 
 ### Exemple de payload de notification
 
@@ -670,7 +670,7 @@ Préparé par la Direction Technique PLIIIZ · technique@plizmoney.com
 |----------|-----------|-------------------|-----|
 | Instance applicative défaillante | ALB health check (30 s) | Remplacement ECS automatique | < 2 min |
 | Base de données primaire down | RDS monitoring | Failover Multi-AZ automatique | < 2 min |
-| MQTT broker indisponible | Timeout de connexion | Mode dégradé — transactions sans notification | Immédiat |
+| FCM indisponible | Timeout de connexion | Mode dégradé — transactions sans notification push | Immédiat |
 | API partenaire indisponible | HTTP 5xx / timeout | Circuit breaker + rejet gracieux client | Immédiat |
 | Région AWS défaillante | Route 53 health check | Bascule vers région secondaire | < 4 h |
 | Attaque DDoS | AWS Shield + WAF | Mitigation automatique | < 5 min |
@@ -856,7 +856,7 @@ La table `WalletBalanceHistory` permet de reconstituer le solde de tout portefeu
 | **Architecture** | Microservices modulaires, Multi-AZ AWS, scalabilité horizontale |
 | **Sécurité** | TLS partout, AES-256, JWT rotatif, WAF, Shield Advanced, OWASP |
 | **Conformité** | KYC niveaux 1 et 2, LCB-FT, ségrégation des fonds, piste d'audit |
-| **Résilience** | HA Multi-AZ, RTO < 4 h, RPO < 1 h, mode dégradé MQTT |
+| **Résilience** | HA Multi-AZ, RTO < 4 h, RPO < 1 h, mode dégradé FCM |
 | **Traçabilité** | `WalletBalanceHistory` immuable, CloudTrail 7 ans, logs complets |
 | **Interopérabilité** | Wave, Orange Money, MTN, Ecobank, SamirPay — Factory Pattern |
 | **Qualité** | CI/CD automatisé, SAST/DAST, Blue/Green, rollback < 5 min |

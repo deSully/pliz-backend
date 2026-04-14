@@ -17,7 +17,7 @@ sequenceDiagram
     participant ALB as Load Balancer
     participant API as Django API
     participant DB as PostgreSQL
-    participant MQTT as HiveMQ MQTT
+    participant FCM as Firebase FCM
 
     U->>ALB: POST /api/transaction/send-money/ (JWT Bearer)
     ALB->>API: Forward — HTTPS TLS 1.3
@@ -32,6 +32,6 @@ sequenceDiagram
     API->>DB: UPDATE Transaction (status=SUCCESS)
     API->>DB: COMMIT
     DB-->>API: OK ✓
-    API->>MQTT: Publish notification expéditeur
-    API->>MQTT: Publish notification destinataire
+    API->>FCM: Push notification expéditeur
+    API->>FCM: Push notification destinataire
     API-->>U: 200 OK · order_id · status: success
