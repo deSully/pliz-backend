@@ -20,7 +20,3 @@ ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:
 ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:
 AES128-SHA:AES256-SHA:DES-CBC3-SHA';
 ssl_prefer_server_ciphers on;
-
-# Optionnel : activer session cache pour performance
-ssl_session_cache shared:SSL:10m;
-ssl_session_timeout 10m;
