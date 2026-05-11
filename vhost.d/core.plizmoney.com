@@ -11,12 +11,9 @@ location /media/ {
 }
 
 
-# Protocoles TLS supportés (inclut TLSv1.1 pour compatibilité avec anciens clients)
-ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
+# Protocoles TLS supportés
+ssl_protocols TLSv1.2 TLSv1.3;
 
-# Cipher suites compatibles modernes et anciens clients
-ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:
-ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:
-ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:
-AES128-SHA:AES256-SHA:DES-CBC3-SHA';
+# Cipher suites modernes (compatibles OpenSSL 3.x)
+ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305';
 ssl_prefer_server_ciphers on;
